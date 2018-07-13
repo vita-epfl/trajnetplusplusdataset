@@ -56,6 +56,17 @@ Extract:
     rm -r data/trajnet_original/__MACOSX
 
 
+Run
+---
+
+.. code-block:: sh
+
+    python -m trajnetdataset.convert
+
+    # create plots to check new dataset
+    python -m trajnettools.plot
+
+
 Difference in generated data
 ----------------------------
 

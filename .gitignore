@@ -10,3 +10,6 @@ dist/
 
 # Editors
 .vscode/
+
+# OS
+.DS_Store
