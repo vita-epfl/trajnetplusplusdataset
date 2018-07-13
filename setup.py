@@ -21,6 +21,7 @@ setup(
 
     install_requires=[
         'pysparkling',
+        'scipy',
         'trajnettools',
     ],
     extras_require={

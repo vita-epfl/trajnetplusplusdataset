@@ -1,5 +1,12 @@
+data/raw/
+data/3DMOT2015Labels/
+output/
+
 # Python
 venv*/
 *.pyc
 *.egg-info/
 dist/
+
+# Editors
+.vscode/

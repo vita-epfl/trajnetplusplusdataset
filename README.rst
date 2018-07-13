@@ -10,7 +10,7 @@ Install
 .. code-block:: sh
 
     pip install -e '.[test,plot]'
-    pylint
+    pylint trajnetdataset
     pytest
 
 
@@ -45,6 +45,7 @@ Extract:
 
     # PETS09 S2L1 ground truth
     mkdir -p data/raw/mot
+    tar -xzf data/3DMOT2015Labels.zip -C data/
     cp data/3DMOT2015Labels/train/PETS09-S2L1/gt/gt.txt data/raw/mot/pets2009_s2l1.txt
 
     # original Trajnet files
