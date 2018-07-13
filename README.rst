@@ -1,9 +1,11 @@
-## TODO
+TODO
+----
 
 * proper world coordinates for crowds datasets
 
 
-## Install
+Install
+-------
 
 .. code-block:: sh
 
@@ -12,7 +14,8 @@
     pytest
 
 
-## Prepare Data
+Prepare Data
+------------
 
 Existing data:
 
@@ -52,7 +55,8 @@ Extract:
     rm -r data/trajnet_original/__MACOSX
 
 
-## Difference in generated data
+Difference in generated data
+----------------------------
 
 * partial tracks are now included (for correct occupancy maps)
 * pedestrians that appear in multiple chunks had the same id before (might be a problem for some input readers)
