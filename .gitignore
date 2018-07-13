@@ -1,0 +1,5 @@
+# Python
+venv*/
+*.pyc
+*.egg-info/
+dist/
