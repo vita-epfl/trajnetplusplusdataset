@@ -63,17 +63,17 @@ def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2):
 
     # train dataset
     train_rows = input_rows.filter(lambda r: r.frame in train_frames)
-    train_output = output_file.replace('{split}', 'train')
+    train_output = output_file.format(split='train')
     train_scenes = Scenes().rows_to_file(train_rows, train_output)
 
     # validation dataset
     val_rows = input_rows.filter(lambda r: r.frame in val_frames)
-    val_output = output_file.replace('{split}', 'val')
+    val_output = output_file.format(split='val')
     val_scenes = Scenes(start_scene_id=train_scenes.scene_id).rows_to_file(val_rows, val_output)
 
     # test dataset
     test_rows = input_rows.filter(lambda r: r.frame in test_frames)
-    test_output = output_file.replace('{split}', 'test')
+    test_output = output_file.format(split='test')
     test_scenes = Scenes(start_scene_id=val_scenes.scene_id).rows_to_file(test_rows, test_output)
 
 
@@ -82,33 +82,33 @@ def main():
 
     # new datasets
     write(edinburgh(sc, 'data/raw/edinburgh/tracks.*.zip'),
-          'output/{split}/edinburgh_{type}.ndjson')
+          'output/{split}/edinburgh.ndjson')
     write(syi(sc, 'data/raw/syi/0?????.txt'),
-          'output/{split}/syi_{type}.ndjson')
+          'output/{split}/syi.ndjson')
 
     # originally train
     write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
-          'output/{split}/biwi_hotel_{type}.ndjson')
+          'output/{split}/biwi_hotel.ndjson')
 #     write(crowds(sc, 'data/raw/crowds/arxiepiskopi1.vsp'),
-#           'output/{split}/crowds_arxiepiskopi1_{type}.ndjson')
+#           'output/{split}/crowds_arxiepiskopi1.ndjson')
     write(crowds(sc, 'data/raw/crowds/crowds_zara02.vsp'),
-          'output/{split}/crowds_zara02_{type}.ndjson')
+          'output/{split}/crowds_zara02.ndjson')
     write(crowds(sc, 'data/raw/crowds/crowds_zara03.vsp'),
-          'output/{split}/crowds_zara03_{type}.ndjson')
+          'output/{split}/crowds_zara03.ndjson')
     write(crowds(sc, 'data/raw/crowds/students001.vsp'),
-          'output/{split}/crowds_students001_{type}.ndjson')
+          'output/{split}/crowds_students001.ndjson')
     write(crowds(sc, 'data/raw/crowds/students003.vsp'),
-          'output/{split}/crowds_students003_{type}.ndjson')
+          'output/{split}/crowds_students003.ndjson')
 #     write(mot(sc, 'data/raw/mot/pets2009_s2l1.txt'),
-#           'output/{split}/mot_pets2009_s2l1_{type}.ndjson')
+#           'output/{split}/mot_pets2009_s2l1.ndjson')
 
     # originally test
     write(biwi(sc, 'data/raw/biwi/seq_eth/obsmat.txt'),
-          'output/{split}/biwi_eth_{type}.ndjson')
+          'output/{split}/biwi_eth.ndjson')
     write(crowds(sc, 'data/raw/crowds/crowds_zara01.vsp'),
-          'output/{split}/crowds_zara01_{type}.ndjson')
+          'output/{split}/crowds_zara01.ndjson')
     write(crowds(sc, 'data/raw/crowds/uni_examples.vsp'),
-          'output/{split}/crowds_uni_examples_{type}.ndjson')
+          'output/{split}/crowds_uni_examples.ndjson')
 
     # compress the outputs
     subprocess.check_output(['tar', '-czf', 'output/test.tar.gz', 'output/test'])

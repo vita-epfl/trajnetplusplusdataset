@@ -79,13 +79,9 @@ class Scenes(object):
         return rows.context.parallelize(filtered_scenes)
 
     def rows_to_file(self, rows, output_file):
-        (self.from_rows(rows)
-         .map(trajnettools.writers.trajnet_scenes)
-         .saveAsTextFile(output_file.format(split='train', type='scenes')))
-        (rows
-         .filter(lambda r: r.frame in self.frames)
-         .map(trajnettools.writers.trajnet_tracks)
-         .repartition(1)
-         .saveAsTextFile(output_file.format(split='train', type='tracks')))
+        scenes = self.from_rows(rows)
+        tracks = rows.filter(lambda r: r.frame in self.frames)
+        all_data = rows.context.union((scenes, tracks))
+        all_data.map(trajnettools.writers.trajnet).saveAsTextFile(output_file)
 
         return self
