@@ -1,5 +1,6 @@
 data/raw/
 data/3DMOT2015Labels/
+data/cvpr2015_pedestrianWalkingPathDataset.rar
 output/
 
 # Python

@@ -28,6 +28,7 @@ Existing data:
         ewap_dataset_light.tgz
         # 3DMOT2015Labels  # from: https://motchallenge.net/data/3DMOT2015Labels.zip (video file at http://cs.binghamton.edu/~mrldata/public/PETS2009/S2_L1.tar.bz2)
         Train.zip  # from trajnet.epfl.ch
+        cvpr2015_pedestrianWalkingPathDataset.rar  # from http://www.ee.cuhk.edu.hk/~syi/
 
 Extract:
 
@@ -55,6 +56,13 @@ Extract:
     rm -r data/trajnet_original/train
     rm -r data/trajnet_original/__MACOSX
 
+    # Edinburgh Informatics Forum tracker
+    mkdir -p data/raw/edinburgh
+    wget -i edinburgh_informatics_forum_urls.txt -P data/raw/edinburgh/
+
+    # pedestrian walking dataset
+    mkdir -p data/raw/syi
+    unrar e data/cvpr2015_pedestrianWalkingPathDataset.rar data/raw/syi
 
 Run
 ---

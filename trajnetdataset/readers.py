@@ -1,17 +1,18 @@
-from collections import defaultdict
-import numpy as np
-import scipy.interpolate
 import xml.etree.ElementTree
 
-from trajnettools import Row
+import numpy as np
+import os
+import scipy.interpolate
+
+from trajnettools import TrackRow
 
 
 def biwi(line):
     line = [e for e in line.split(' ') if e != '']
-    return Row(int(float(line[0]) - 1),  # shift from 1-index to 0-index
-               int(float(line[1])),
-               float(line[2]),
-               float(line[4]))
+    return TrackRow(int(float(line[0]) - 1),  # shift from 1-index to 0-index
+                    int(float(line[1])),
+                    float(line[2]),
+                    float(line[4]))
 
 
 def crowds_interpolate_person(ped_id, person_xyf):
@@ -27,7 +28,7 @@ def crowds_interpolate_person(ped_id, person_xyf):
     y_fn = scipy.interpolate.interp1d(fs, ys, kind=kind)
 
     frames = np.arange(min(fs) // 10 * 10 + 10, max(fs), 10)
-    return [Row(int(f), ped_id, x, y)
+    return [TrackRow(int(f), ped_id, x, y)
             for x, y, f in np.stack([x_fn(frames), y_fn(frames), frames]).T]
 
 
@@ -80,7 +81,7 @@ def mot_xml(file_name):
             x = box.attrib['xc']
             y = box.attrib['yc']
 
-            yield Row(f, int(p), float(x) / 100.0, float(y) / 100.0)
+            yield TrackRow(f, int(p), float(x) / 100.0, float(y) / 100.0)
 
 
 def mot(line):
@@ -90,15 +91,62 @@ def mot(line):
     <frame>, <id>, <bb_left>, <bb_top>, <bb_width>, <bb_height>, <conf>, <x>, <y>, <z>
     """
     line = [e for e in line.split(',') if e != '']
-    return Row(int(float(line[0])),
-               int(float(line[1])),
-               float(line[7]),
-               float(line[8]))
+    return TrackRow(int(float(line[0])),
+                    int(float(line[1])),
+                    float(line[7]),
+                    float(line[8]))
+
+
+def edinburgh(filename_content_index):
+    """Edinburgh Informatics Forum data reader.
+
+    Original frame rate is 9fps.
+    Every pixel corresponds to 24.7mm.
+    http://homepages.inf.ed.ac.uk/rbf/FORUMTRACKING/
+    """
+    (_, whole_file), index = filename_content_index
+
+    for line in whole_file.splitlines():
+        line = line.strip()
+        if not line.startswith('TRACK.R'):
+            continue
+
+        # get to track id
+        line = line[7:]
+        track_id, _, coordinates = line.partition('=')
+        track_id = int(track_id) + index * 1000000
+
+        # parse track
+        for coordinates in coordinates.split(';'):
+            if not coordinates:
+                continue
+            x, y, frame = coordinates.strip('[] ').split(' ')
+            frame = int(frame) + index * 1000000
+            if frame % 3 != 0:  # downsample frame rate
+                continue
+            yield TrackRow(frame, track_id, float(x) * 0.0247, float(y) * 0.0247)
+
+
+def syi(filename_content):
+    filename, whole_file = filename_content
+    track_id = int(os.path.basename(filename).replace('.txt', ''))
+
+    chunk = []
+    for line in whole_file.split('\n'):
+        if not line:
+            continue
+        chunk.append(int(line))
+        if len(chunk) < 3:
+            continue
+
+        # rough approximation of mapping to world coordinates (main concourse is 37m x 84m)
+        yield TrackRow(chunk[2], track_id, chunk[0] * 37.0 / 1920, chunk[1] * 84.0 / 1080)
+        chunk = []
 
 
 def trajnet_original(line):
     line = [e for e in line.split(' ') if e != '']
-    return Row(int(float(line[0])),
-               int(float(line[1])),
-               float(line[2]),
-               float(line[3]))
+    return TrackRow(int(float(line[0])),
+                    int(float(line[1])),
+                    float(line[2]),
+                    float(line[3]))
