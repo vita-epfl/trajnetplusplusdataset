@@ -5,7 +5,7 @@ from trajnettools import SceneRow
 
 
 class Scenes(object):
-    def __init__(self, start_scene_id=0, chunk_size=20, chunk_stride=5):
+    def __init__(self, start_scene_id=0, chunk_size=21, chunk_stride=5):
         self.scene_id = start_scene_id
         self.chunk_size = chunk_size
         self.chunk_stride = chunk_stride
@@ -39,44 +39,42 @@ class Scenes(object):
                               .mapValues(self.close_pedestrians)
                               .collectAsMap())
 
+        def to_scene_row(ped_frames):
+            ped_id, scene_frames = ped_frames
+            row = SceneRow(self.scene_id, ped_id, scene_frames[0], scene_frames[-1])
+            self.scene_id += 1
+            return row
+
         # scenes: pedestrian of interest, [frames]
         scenes = (
             rows
             .groupBy(lambda r: r.pedestrian)
             .filter(lambda p_path: len(p_path[1]) >= self.chunk_size)
+            .mapValues(lambda path: sorted(path, key=lambda p: p.frame))
             .flatMapValues(lambda path: [
-                [path[ii].frame for ii in range(i, i + self.chunk_size + 1)]
-                for i in range(0, len(path) - self.chunk_size, self.chunk_stride)
+                [path[ii].frame for ii in range(i, i + self.chunk_size)]
+                for i in range(0, len(path) - self.chunk_size - 1, self.chunk_stride)
                 # filter for pedestrians moving by more than 1 meter
-                if self.euclidean_distance_2(path[i], path[i+self.chunk_size]) > 1.0
+                if self.euclidean_distance_2(path[i], path[i+self.chunk_size-1]) > 1.0
             ])
-            .collect()
-        )
-
-        # filtered output
-        filtered_scenes = []
-        for ped_id, scene_frames in scenes:
-            n_rows = sum(count_by_frame[f] for f in scene_frames)
 
             # filter for scenes that have some activity
-            if n_rows < self.chunk_size * 2.0:
-                continue
+            .filter(lambda ped_frames:
+                    sum(count_by_frame[f] for f in ped_frames[1]) >= 2.0 * self.chunk_size)
 
-            # detect proximity
-            if ped_id not in {p
-                              for frame in scene_frames
-                              for p in occupancy_by_frame[frame]}:
-                continue
+            # require some proximity to other pedestrians
+            .filter(lambda ped_frames:
+                    ped_frames[0] in {p
+                                      for frame in ped_frames[1]
+                                      for p in occupancy_by_frame[frame]})
 
-            # add frames
-            self.frames |= set(scene_frames)
+            .cache()
+        )
 
-            filtered_scenes.append(
-                SceneRow(self.scene_id, ped_id, scene_frames[0], scene_frames[-1]))
+        self.frames |= set(scenes.flatMap(lambda ped_frames: ped_frames[1]).toLocalIterator())
 
-            self.scene_id += 1
+        return scenes.map(to_scene_row)
 
-        return rows.context.parallelize(filtered_scenes)
 
     def rows_to_file(self, rows, output_file):
         scenes = self.from_rows(rows)
