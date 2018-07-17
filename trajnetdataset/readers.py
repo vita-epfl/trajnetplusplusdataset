@@ -128,10 +128,19 @@ def edinburgh(filename_content_index):
 
 
 def syi(filename_content):
+    """Tracking dataset in Grand Central.
+
+    Yi_Pedestrian_Travel_Time_ICCV_2015_paper.pdf states that original
+    frame rate is 25fps.
+
+    Input rows are sampled every 20 frames. Assuming 25fps at recording,
+    need to interpolate an additional row to get to 2.5 rows per second.
+    """
     filename, whole_file = filename_content
     track_id = int(os.path.basename(filename).replace('.txt', ''))
 
     chunk = []
+    last_row = None
     for line in whole_file.split('\n'):
         if not line:
             continue
@@ -140,8 +149,21 @@ def syi(filename_content):
             continue
 
         # rough approximation of mapping to world coordinates (main concourse is 37m x 84m)
-        yield TrackRow(chunk[2], track_id, chunk[0] * 37.0 / 1920, chunk[1] * 84.0 / 1080)
+        new_row = TrackRow(chunk[2], track_id, chunk[0] * 30.0 / 1920, chunk[1] * 70.0 / 1080)
+
+        # interpolate one row to increase frame rate
+        if last_row is not None:
+            interpolated_row = TrackRow(
+                int((last_row.frame + new_row.frame) / 2),
+                track_id,
+                (last_row.x + new_row.x) / 2,
+                (last_row.y + new_row.y) / 2,
+            )
+            yield interpolated_row
+
+        yield new_row
         chunk = []
+        last_row = new_row
 
 
 def trajnet_original(line):

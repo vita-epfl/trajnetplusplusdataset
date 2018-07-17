@@ -81,10 +81,10 @@ def main():
     sc = pysparkling.Context()
 
     # new datasets
-    write(edinburgh(sc, 'data/raw/edinburgh/tracks.*.zip'),
-          'output/{split}/edinburgh.ndjson')
     write(syi(sc, 'data/raw/syi/0?????.txt'),
           'output/{split}/syi.ndjson')
+    write(edinburgh(sc, 'data/raw/edinburgh/tracks.*.zip'),
+          'output/{split}/edinburgh.ndjson')
 
     # originally train
     write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
