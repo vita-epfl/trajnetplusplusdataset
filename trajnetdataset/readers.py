@@ -1,7 +1,8 @@
+import json
+import os
 import xml.etree.ElementTree
 
 import numpy as np
-import os
 import scipy.interpolate
 
 from trajnettools import TrackRow
@@ -164,6 +165,42 @@ def syi(filename_content):
         yield new_row
         chunk = []
         last_row = new_row
+
+
+def dukemtmc(input_array, query_camera=5):
+    """DukeMTMC dataset.
+
+    Recorded at 59.940059 fps.
+
+    Line format:
+    [camera, ID, frame, left, top, width, height, worldX, worldY, feetX, feetyY]
+    """
+    for line in input_array:
+        camera, person, frame, _, _, _, _, world_x, world_y, _, _ = line
+
+        camera = int(camera)
+        if camera != query_camera:
+            continue
+
+        frame = int(frame)
+        if frame % 24 != 0:
+            continue
+
+        yield TrackRow(frame, int(person), world_x, world_y)
+
+
+def wildtrack(filename_content):
+    filename, content = filename_content
+
+    frame = int(os.path.basename(filename).replace('.json', ''))
+    for entry in json.loads(content):
+        ped_id = entry['personID']
+        position_id = entry['positionID']
+
+        x = -3.0 + 0.025 * (position_id % 480)
+        y = -9.0 + 0.025 * (position_id / 480)
+
+        yield TrackRow(frame, ped_id, x, y)
 
 
 def trajnet_original(line):

@@ -3,6 +3,7 @@
 import subprocess
 
 import pysparkling
+import scipy.io
 import trajnettools
 
 from . import readers
@@ -53,6 +54,22 @@ def syi(sc, input_file):
             .cache())
 
 
+def dukemtmc(sc, input_file):
+    print('processing ' + input_file)
+    contents = scipy.io.loadmat(input_file)['trainData']
+    return (sc
+            .parallelize(readers.dukemtmc(contents))
+            .cache())
+
+
+def wildtrack(sc, input_file):
+    print('processing ' + input_file)
+    return (sc
+            .wholeTextFiles(input_file)
+            .flatMap(readers.wildtrack)
+            .cache())
+
+
 def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2):
     frames = sorted(set(input_rows.map(lambda r: r.frame).toLocalIterator()))
     train_split_index = int(len(frames) * train_fraction)
@@ -81,6 +98,10 @@ def main():
     sc = pysparkling.Context()
 
     # new datasets
+    write(wildtrack(sc, 'data/raw/wildtrack/Wildtrack_dataset/annotations_positions/*.json'),
+          'output/{split}/wildtrack.ndjson')
+    write(dukemtmc(sc, 'data/raw/duke/trainval.mat'),
+          'output/{split}/dukemtmc.ndjson')
     write(syi(sc, 'data/raw/syi/0?????.txt'),
           'output/{split}/syi.ndjson')
     # write(edinburgh(sc, 'data/raw/edinburgh/tracks.*.zip'),

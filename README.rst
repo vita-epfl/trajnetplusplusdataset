@@ -64,6 +64,15 @@ Extract:
     mkdir -p data/raw/syi
     unrar e data/cvpr2015_pedestrianWalkingPathDataset.rar data/raw/syi
 
+    # DukeMTMC - camera 5
+    mkdir -p data/raw/duke
+    wget http://vision.cs.duke.edu/DukeMTMC/data/ground_truth/trainval.mat -P data/raw/duke
+
+    # https://cvlab.epfl.ch/data/wildtrack
+    mkdir -p data/raw/wildtrack
+    tar -xzf data/Wildtrack_dataset_full.zip -C data/raw/wildtrack
+
+
 Run
 ---
 
@@ -82,3 +91,4 @@ Difference in generated data
 * pedestrians that appear in multiple chunks had the same id before (might be a problem for some input readers)
 * separate scenes with annotation of the one primary pedestrian
 * the primary pedestrian has to move by more than 1 meter
+* at one point, the primary pedestrian has to be <3m away from another pedestrian
