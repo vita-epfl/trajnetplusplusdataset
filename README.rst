@@ -44,7 +44,7 @@ Extract:
     unrar e data/data_university_students.rar data/raw/crowds
     unrar e data/data_zara.rar data/raw/crowds
 
-    # PETS09 S2L1 ground truth
+    # PETS09 S2L1 ground truth -- not used because people behavior is not normal
     mkdir -p data/raw/mot
     tar -xzf data/3DMOT2015Labels.zip -C data/
     cp data/3DMOT2015Labels/train/PETS09-S2L1/gt/gt.txt data/raw/mot/pets2009_s2l1.txt
@@ -56,7 +56,7 @@ Extract:
     rm -r data/trajnet_original/train
     rm -r data/trajnet_original/__MACOSX
 
-    # Edinburgh Informatics Forum tracker
+    # Edinburgh Informatics Forum tracker -- not used because tracks are not good enough
     mkdir -p data/raw/edinburgh
     wget -i edinburgh_informatics_forum_urls.txt -P data/raw/edinburgh/
 

@@ -83,14 +83,14 @@ def main():
     # new datasets
     write(syi(sc, 'data/raw/syi/0?????.txt'),
           'output/{split}/syi.ndjson')
-    write(edinburgh(sc, 'data/raw/edinburgh/tracks.*.zip'),
-          'output/{split}/edinburgh.ndjson')
+    # write(edinburgh(sc, 'data/raw/edinburgh/tracks.*.zip'),
+    #       'output/{split}/edinburgh.ndjson')
 
     # originally train
     write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
           'output/{split}/biwi_hotel.ndjson')
-#     write(crowds(sc, 'data/raw/crowds/arxiepiskopi1.vsp'),
-#           'output/{split}/crowds_arxiepiskopi1.ndjson')
+    # write(crowds(sc, 'data/raw/crowds/arxiepiskopi1.vsp'),
+    #       'output/{split}/crowds_arxiepiskopi1.ndjson')
     write(crowds(sc, 'data/raw/crowds/crowds_zara02.vsp'),
           'output/{split}/crowds_zara02.ndjson')
     write(crowds(sc, 'data/raw/crowds/crowds_zara03.vsp'),
@@ -99,8 +99,8 @@ def main():
           'output/{split}/crowds_students001.ndjson')
     write(crowds(sc, 'data/raw/crowds/students003.vsp'),
           'output/{split}/crowds_students003.ndjson')
-#     write(mot(sc, 'data/raw/mot/pets2009_s2l1.txt'),
-#           'output/{split}/mot_pets2009_s2l1.ndjson')
+    # write(mot(sc, 'data/raw/mot/pets2009_s2l1.txt'),
+    #       'output/{split}/mot_pets2009_s2l1.ndjson')
 
     # originally test
     write(biwi(sc, 'data/raw/biwi/seq_eth/obsmat.txt'),
