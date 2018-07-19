@@ -33,7 +33,7 @@ class Scenes(object):
                 for ped_id in cell}
 
     @staticmethod
-    def continuous_frames(frames, tolerance=2.1):
+    def continuous_frames(frames, tolerance=1.5):
         increments = [f2 - f1 for f1, f2 in zip(frames[:-1], frames[1:])]
         median_increment = sorted(increments)[int(len(increments) / 2)]
         ok = median_increment * tolerance > max(increments)
