@@ -32,6 +32,18 @@ class Scenes(object):
                 for cell in sparse_occupancy.values() if len(cell) > 1
                 for ped_id in cell}
 
+    @staticmethod
+    def continuous_frames(frames, tolerance=2.1):
+        increments = [f2 - f1 for f1, f2 in zip(frames[:-1], frames[1:])]
+        median_increment = sorted(increments)[int(len(increments) / 2)]
+        ok = median_increment * tolerance > max(increments)
+
+        # if not ok:
+        #     print('!!!!!!!!! DETECTED GAP IN FRAMES')
+        #     print(increments)
+
+        return ok
+
     def from_rows(self, rows):
         count_by_frame = rows.groupBy(lambda r: r.frame).mapValues(len).collectAsMap()
         occupancy_by_frame = (rows
@@ -57,6 +69,9 @@ class Scenes(object):
                 # filter for pedestrians moving by more than 1 meter
                 if self.euclidean_distance_2(path[i], path[i+self.chunk_size-1]) > 1.0
             ])
+
+            # filter out scenes with large gaps in frame numbers
+            .filter(lambda ped_frames: self.continuous_frames(ped_frames[1]))
 
             # filter for scenes that have some activity
             .filter(lambda ped_frames:
