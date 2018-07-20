@@ -1,9 +1,3 @@
-TODO
-----
-
-* proper world coordinates for crowds datasets
-
-
 Install
 -------
 
