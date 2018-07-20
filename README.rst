@@ -97,15 +97,15 @@ Difference in generated data
 Citations
 ---------
 
-* syi: Shuai Yi, Hongsheng Li, and Xiaogang Wang. Understanding Pedestrian Behaviors from Stationary Crowd Groups. In Proceedings of IEEE Conference on Computer Vision and Pattern Recognition (CVPR 2015).
-* edinburgh: B. Majecka, "Statistical models of pedestrian behaviour in the Forum", MSc Dissertation, School of Informatics, University of Edinburgh, 2009.
-* wildtrack:
+* ``syi``: Shuai Yi, Hongsheng Li, and Xiaogang Wang. Understanding Pedestrian Behaviors from Stationary Crowd Groups. In Proceedings of IEEE Conference on Computer Vision and Pattern Recognition (CVPR 2015).
+* ``edinburgh``: B. Majecka, "Statistical models of pedestrian behaviour in the Forum", MSc Dissertation, School of Informatics, University of Edinburgh, 2009.
+* ``wildtrack``:
 
-```
-@inproceedings{chavdarova-et-al-2018,
-  author = "Chavdarova, T. and Baqué, P. and Bouquet, S. and Maksai, A. and Jose, C. and Bagautdinov, T. and Lettry, L. and Fua, P. and Van Gool, L. and Fleuret, F.",
-  title = {{WILDTRACK}: A Multi-camera {HD} Dataset for Dense Unscripted Pedestrian Detection},
-  journal = "Proceedings of the IEEE international conference on Computer Vision and Pattern Recognition (CVPR)",
-  year = 2018,
-}
-```
+.. code-block::
+
+    @inproceedings{chavdarova-et-al-2018,
+        author = "Chavdarova, T. and Baqué, P. and Bouquet, S. and Maksai, A. and Jose, C. and Bagautdinov, T. and Lettry, L. and Fua, P. and Van Gool, L. and Fleuret, F.",
+        title = {{WILDTRACK}: A Multi-camera {HD} Dataset for Dense Unscripted Pedestrian Detection},
+        journal = "Proceedings of the IEEE international conference on Computer Vision and Pattern Recognition (CVPR)",
+        year = 2018,
+    }
