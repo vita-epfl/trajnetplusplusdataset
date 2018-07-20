@@ -5,10 +5,11 @@ from trajnettools import SceneRow
 
 
 class Scenes(object):
-    def __init__(self, start_scene_id=0, chunk_size=21, chunk_stride=5):
+    def __init__(self, start_scene_id=0, chunk_size=21, chunk_stride=5, visible_chunk=None):
         self.scene_id = start_scene_id
         self.chunk_size = chunk_size
         self.chunk_stride = chunk_stride
+        self.visible_chunk = visible_chunk
         self.frames = set()
 
     @staticmethod
@@ -86,7 +87,12 @@ class Scenes(object):
             .cache()
         )
 
-        self.frames |= set(scenes.flatMap(lambda ped_frames: ped_frames[1]).toLocalIterator())
+        self.frames |= set(scenes
+                           .flatMap(lambda ped_frames:
+                                    ped_frames[1]
+                                    if self.visible_chunk is None
+                                    else ped_frames[1][:self.visible_chunk])
+                           .toLocalIterator())
 
         return scenes.map(to_scene_row)
 

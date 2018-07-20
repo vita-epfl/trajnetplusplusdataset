@@ -92,3 +92,12 @@ Difference in generated data
 * separate scenes with annotation of the one primary pedestrian
 * the primary pedestrian has to move by more than 1 meter
 * at one point, the primary pedestrian has to be <3m away from another pedestrian
+
+
+Citations
+---------
+
+* syi: Shuai Yi, Hongsheng Li, and Xiaogang Wang. Understanding Pedestrian Behaviors from Stationary
+Crowd Groups. In Proceedings of IEEE Conference on Computer Vision and Pattern Recognition (CVPR
+2015).
+* edinburgh: B. Majecka, "Statistical models of pedestrian behaviour in the Forum", MSc Dissertation, School of Informatics, University of Edinburgh, 2009.
