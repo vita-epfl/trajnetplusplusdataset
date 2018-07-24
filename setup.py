@@ -1,9 +1,11 @@
+"""setup trajnetdataset"""
+
 from setuptools import setup
 
 # extract version from __init__.py
 with open('trajnetdataset/__init__.py', 'r') as f:
-    version_line = [l for l in f if l.startswith('__version__')][0]
-    VERSION = version_line.split('=')[1].strip()[1:-1]
+    VERSION_LINE = [l for l in f if l.startswith('__version__')][0]
+    VERSION = VERSION_LINE.split('=')[1].strip()[1:-1]
 
 
 setup(
