@@ -83,7 +83,7 @@ Difference in generated data
 
 * partial tracks are now included (for correct occupancy maps)
 * pedestrians that appear in multiple chunks had the same id before (might be a problem for some input readers)
-* separate scenes with annotation of the one primary pedestrian
+* explicit index of scenes with annotation of the primary pedestrian
 * the primary pedestrian has to move by more than 1 meter
 * at one point, the primary pedestrian has to be <3m away from another pedestrian
 
