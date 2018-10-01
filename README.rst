@@ -75,7 +75,7 @@ Run
     python -m trajnetdataset.convert
 
     # create plots to check new dataset
-    python -m trajnettools.plot
+    python -m trajnettools.summarize output/train/*.ndjson
 
 
 Difference in generated data
