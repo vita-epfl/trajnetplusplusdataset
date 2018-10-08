@@ -70,7 +70,7 @@ def wildtrack(sc, input_file):
             .cache())
 
 
-def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2):
+def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2,fps=2.5):
     frames = sorted(set(input_rows.map(lambda r: r.frame).toLocalIterator()))
     train_split_index = int(len(frames) * train_fraction)
     val_split_index = train_split_index + int(len(frames) * val_fraction)
@@ -81,21 +81,21 @@ def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2):
     # train dataset
     train_rows = input_rows.filter(lambda r: r.frame in train_frames)
     train_output = output_file.format(split='train')
-    train_scenes = Scenes().rows_to_file(train_rows, train_output)
+    train_scenes = Scenes(fps=fps).rows_to_file(train_rows, train_output)
 
     # validation dataset
     val_rows = input_rows.filter(lambda r: r.frame in val_frames)
     val_output = output_file.format(split='val')
-    val_scenes = Scenes(start_scene_id=train_scenes.scene_id).rows_to_file(val_rows, val_output)
+    val_scenes = Scenes(start_scene_id=train_scenes.scene_id, fps=fps).rows_to_file(val_rows, val_output)
 
     # public test dataset
     test_rows = input_rows.filter(lambda r: r.frame in test_frames)
     test_output = output_file.format(split='test')
-    test_scenes = Scenes(start_scene_id=val_scenes.scene_id, chunk_stride=21, visible_chunk=9)
+    test_scenes = Scenes(start_scene_id=val_scenes.scene_id, chunk_stride=21, visible_chunk=9, fps=fps)
     test_scenes.rows_to_file(test_rows, test_output)
     # private test dataset
     private_test_output = output_file.format(split='test_private')
-    private_test_scenes = Scenes(start_scene_id=val_scenes.scene_id, chunk_stride=21)
+    private_test_scenes = Scenes(start_scene_id=val_scenes.scene_id, chunk_stride=21, fps=fps)
     private_test_scenes.rows_to_file(test_rows, private_test_output)
 
 
@@ -108,7 +108,7 @@ def main():
 
     # new datasets
     write(wildtrack(sc, 'data/raw/wildtrack/Wildtrack_dataset/annotations_positions/*.json'),
-          'output/{split}/wildtrack.ndjson')
+          'output/{split}/wildtrack.ndjson',fps = 2)
     write(dukemtmc(sc, 'data/raw/duke/trainval.mat'),
           'output/{split}/dukemtmc.ndjson')
     write(syi(sc, 'data/raw/syi/0?????.txt'),

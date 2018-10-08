@@ -5,12 +5,13 @@ from trajnettools import SceneRow
 
 
 class Scenes(object):
-    def __init__(self, start_scene_id=0, chunk_size=21, chunk_stride=5, visible_chunk=None):
+    def __init__(self, start_scene_id=0, chunk_size=21, chunk_stride=5, visible_chunk=None,fps =2.5):
         self.scene_id = start_scene_id
         self.chunk_size = chunk_size
         self.chunk_stride = chunk_stride
         self.visible_chunk = visible_chunk
         self.frames = set()
+        self.fps = fps
 
     @staticmethod
     def euclidean_distance_2(row1, row2):
@@ -54,7 +55,7 @@ class Scenes(object):
 
         def to_scene_row(ped_frames):
             ped_id, scene_frames = ped_frames
-            row = SceneRow(self.scene_id, ped_id, scene_frames[0], scene_frames[-1])
+            row = SceneRow(self.scene_id, ped_id, scene_frames[0], scene_frames[-1], self.fps)
             self.scene_id += 1
             return row
 
