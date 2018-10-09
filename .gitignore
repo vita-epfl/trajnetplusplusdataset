@@ -9,9 +9,14 @@ venv*/
 *.pyc
 *.egg-info/
 dist/
+.cache
+.idea
 
 # Editors
 .vscode/
 
 # OS
 .DS_Store
+
+
+
