@@ -34,6 +34,7 @@ Extract:
 
     # crowds
     mkdir -p data/raw/crowds
+    cp data/crowds_homography/*.json data/raw/crowds # Put homography files in the right folder
     unrar e data/data_arxiepiskopi.rar data/raw/crowds
     unrar e data/data_university_students.rar data/raw/crowds
     unrar e data/data_zara.rar data/raw/crowds
