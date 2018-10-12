@@ -22,7 +22,7 @@ Existing data:
         ewap_dataset_light.tgz
         # 3DMOT2015Labels  # from: https://motchallenge.net/data/3DMOT2015Labels.zip (video file at http://cs.binghamton.edu/~mrldata/public/PETS2009/S2_L1.tar.bz2)
         Train.zip  # from trajnet.epfl.ch
-        cvpr2015_pedestrianWalkingPathDataset.rar  # from http://www.ee.cuhk.edu.hk/~syi/
+        cvpr2015_pedestrianWalkingPathDataset.rar  # from http://www.ee.cuhk.edu.hk/~syi/ (website not accessible but data are also here: https://www.dropbox.com/s/7y90xsxq0l0yv8d/cvpr2015_pedestrianWalkingPathDataset.rar?dl=0.+63)
 
 Extract:
 
