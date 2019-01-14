@@ -23,6 +23,7 @@ Existing data:
         # 3DMOT2015Labels  # from: https://motchallenge.net/data/3DMOT2015Labels.zip (video file at http://cs.binghamton.edu/~mrldata/public/PETS2009/S2_L1.tar.bz2)
         Train.zip  # from trajnet.epfl.ch
         cvpr2015_pedestrianWalkingPathDataset.rar  # from http://www.ee.cuhk.edu.hk/~syi/ (website not accessible but data are also here: https://www.dropbox.com/s/7y90xsxq0l0yv8d/cvpr2015_pedestrianWalkingPathDataset.rar?dl=0.+63)
+        cff_dataset.zip # from https://www.dropbox.com/s/cnnk2ofreeoshuz/cff_dataset.zip?dl=0
 
 Extract:
 
@@ -43,7 +44,12 @@ Extract:
     mkdir -p data/raw/mot
     tar -xzf data/3DMOT2015Labels.zip -C data/
     cp data/3DMOT2015Labels/train/PETS09-S2L1/gt/gt.txt data/raw/mot/pets2009_s2l1.txt
-
+    
+    # cff
+    mkdir -p data/raw/cff_dataset
+    tar -xzf data/cff_dataset.zip -C data/raw/
+    rm -r data/raw/__MACOSX
+    
     # original Trajnet files
     mkdir -p data/trajnet_original
     tar -xzf data/Train.zip -C data/trajnet_original
@@ -85,7 +91,7 @@ Difference in generated data
 * partial tracks are now included (for correct occupancy maps)
 * pedestrians that appear in multiple chunks had the same id before (might be a problem for some input readers)
 * explicit index of scenes with annotation of the primary pedestrian
-* the primary pedestrian has to move by more than 1 meter
+# * the primary pedestrian has to move by more than 1 meter
 * at one point, the primary pedestrian has to be <3m away from another pedestrian
 
 
