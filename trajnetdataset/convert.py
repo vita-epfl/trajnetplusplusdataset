@@ -69,14 +69,28 @@ def wildtrack(sc, input_file):
             .flatMap(readers.wildtrack)
             .cache())
 
+def cff(sc, input_file):
+    print('processing ' + input_file)
+    return (sc
+            .textFile(input_file)
+            .map(readers.cff)
+            .filter(lambda r: r is not None)
+            .cache())
 
-def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2,fps=2.5):
-    frames = sorted(set(input_rows.map(lambda r: r.frame).toLocalIterator()))
+def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2,fps=2.5, order_frames=False):
+    ## To handle two different time stamps of cff
+    if order_frames:
+        frames = sorted(set(input_rows.map(lambda r: r.frame).toLocalIterator()), key=lambda frame: frame % 100000)
+    else:
+        frames = sorted(set(input_rows.map(lambda r: r.frame).toLocalIterator()))
     train_split_index = int(len(frames) * train_fraction)
     val_split_index = train_split_index + int(len(frames) * val_fraction)
     train_frames = set(frames[:train_split_index])
+    print(len(train_frames))
     val_frames = set(frames[train_split_index:val_split_index])
+    print(len(val_frames))
     test_frames = set(frames[val_split_index:])
+    print(len(test_frames))
 
     # train dataset
     train_rows = input_rows.filter(lambda r: r.frame in train_frames)
@@ -113,6 +127,9 @@ def main():
           'output/{split}/dukemtmc.ndjson')
     write(syi(sc, 'data/raw/syi/0?????.txt'),
           'output/{split}/syi.ndjson')
+   # cff
+    write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-10.csv'),
+          'output/{split}/cff_10.ndjson', order_frames=True)  
 
     # originally train
     write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),

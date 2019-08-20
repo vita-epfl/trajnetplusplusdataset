@@ -209,3 +209,26 @@ def trajnet_original(line):
                     int(float(line[1])),
                     float(line[2]),
                     float(line[3]))
+
+def cff(line):
+    line = [e for e in line.split(';') if e != '']
+    ## Time Stamp
+    time = [t for t in line[0].split(':') if t != '']
+    if time[0][-2:] == '07':
+        ped_id = int(line[4])
+        f = 0
+    elif time[0][-2:] == '17':
+        ped_id = 100000 + int(line[4])
+        f = 100000
+    else:
+        raise ValueError
+    ## Frame
+    f += int(time[-3])*1000 + int(time[-2])*10 + int(time[-1][0])
+
+    if f % 4 == 0:
+        return TrackRow(f,  # shift from 1-index to 0-index
+                        ped_id,
+                        float(line[2])/1000,
+                        float(line[3])/1000)
+    else:
+        return None

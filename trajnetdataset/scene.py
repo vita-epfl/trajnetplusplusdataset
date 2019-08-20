@@ -55,7 +55,7 @@ class Scenes(object):
 
         def to_scene_row(ped_frames):
             ped_id, scene_frames = ped_frames
-            row = SceneRow(self.scene_id, ped_id, scene_frames[0], scene_frames[-1], self.fps)
+            row = SceneRow(self.scene_id, ped_id, scene_frames[0], scene_frames[-1], self.fps, 0)
             self.scene_id += 1
             return row
 
@@ -67,7 +67,7 @@ class Scenes(object):
             .mapValues(lambda path: sorted(path, key=lambda p: p.frame))
             .flatMapValues(lambda path: [
                 [path[ii].frame for ii in range(i, i + self.chunk_size)]
-                for i in range(0, len(path) - self.chunk_size - 1, self.chunk_stride)
+                for i in range(0, len(path) - self.chunk_size + 1, self.chunk_stride)
                 # filter for pedestrians moving by more than 1 meter
                 if self.euclidean_distance_2(path[i], path[i+self.chunk_size-1]) > 1.0
             ])
