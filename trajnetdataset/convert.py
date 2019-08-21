@@ -112,6 +112,10 @@ def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2,fps=2.5,
     private_test_scenes = Scenes(start_scene_id=val_scenes.scene_id, chunk_stride=21, fps=fps)
     private_test_scenes.rows_to_file(test_rows, private_test_output)
 
+    #Get Scene Types
+    train_id = trajectory_type(train_rows, output_file.replace('split', '').format('trainfilter'), fps=fps, track_id=0)
+    val_id   = trajectory_type(val_rows, output_file.replace('split', '').format('valfilter'), fps=fps, track_id=train_id)
+    test_id  = trajectory_type(test_rows, output_file.replace('split', '').format('test_privatefilter'), fps=fps, track_id=val_id)
 
 def write_without_split(input_rows, output_file):
     Scenes().rows_to_file(input_rows, output_file)
