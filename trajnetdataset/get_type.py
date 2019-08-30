@@ -1,11 +1,11 @@
 import os
-import ndjson
+# import ndjson
 import trajnettools
 import numpy as np
 import pysparkling
-from joblib import Parallel, delayed
-import trajnetbaselines
-from interactions import Interaction
+# from joblib import Parallel, delayed
+from .kalman import predict as kalman_predict
+from .interactions import *
 import random
 
 import matplotlib.pyplot as plt
@@ -41,38 +41,29 @@ def get_type(scene):
         '''
         return: True if the traj is linear according to Kalman
         '''
-        kalman_prediction = trajnetbaselines.kalman.predict(scene)
-        return trajnettools.metrics.average_l2(paths[0], kalman_prediction) 
+        kalman_prediction = kalman_predict(scene)
+        return trajnettools.metrics.average_l2(scene[0], kalman_prediction) 
 
     ## Type 3
     def interaction(rows, pos_range=15, dist_thresh=5):
         '''
-        :return: Determine if someone is in the triangle
+        :return: Determine if interaction exists and type (optionally)
         '''
-        return Interaction.check_interaction(rows, pos_range, dist_thresh)
+        return check_interaction(rows, pos_range, dist_thresh)
 
     ## Type 4 = not(Type 1 or Type 2 or Type 3)
 
     ## Type 5
     def group(rows, dist_thresh=2, std_thresh=0.5):
         '''
-        dist_thresh: Distance threshold to be withinin a group
-        std_thresh: Std deviation threshold for variation of distance
         return: True if primary in a group
         '''     
-        path = rows[:, 0]
-        neigh_path = rows[:, 1:]
-        dist_rel = np.linalg.norm((neigh_path[9:21] - path[9:21][:, np.newaxis, :]), axis=2)    
-        mean_dist = np.mean(dist_rel, axis=0)
-        std_dist = np.std(dist_rel, axis=0)
-
-        group_matrix = (mean_dist < dist_thresh) & (std_dist < std_thresh)
-        return np.any(group_matrix)
+        return check_group(rows, dist_thresh, std_thresh)
 
     ## Category Tags
     mult_tag = []
     # Static
-    if euclidean_distance(ped_interest[0], ped_interest[-1]) < static_threshold:
+    if euclidean_distance(scene[0][0], scene[0][-1]) < static_threshold:
         mult_tag.append(1)
     
     # Linear
@@ -80,7 +71,7 @@ def get_type(scene):
         mult_tag.append(2)
 
     # Interactions
-    if interaction(scene_xy, inter_pos_range, inter_dist_thresh):
+    if interaction(scene_xy, pos_range=inter_pos_range, dist_thresh=inter_dist_thresh):
         mult_tag.append(3)
 
     # Non-Linear (No explainable reason)
@@ -105,9 +96,10 @@ def check_collision(scene):
         return False
 
 def write(rows, path, new_scenes, new_frames):
+    output_path = path.split('.')[0] + 'filter.ndjson'
     pysp_tracks = rows.filter(lambda r: r.frame in new_frames).map(trajnettools.writers.trajnet)
     pysp_scenes = pysparkling.Context().parallelize(new_scenes).map(trajnettools.writers.trajnet)
-    pysp_scenes.union(pysp_tracks).saveAsTextFile(path)
+    pysp_scenes.union(pysp_tracks).saveAsTextFile(output_path)
 
 def trajectory_type(rows, path, fps, track_id=0):
     ## Read
@@ -133,7 +125,7 @@ def trajectory_type(rows, path, fps, track_id=0):
     ## Initialize Tag Stats to be collected
     tags = {1: [], 2: [], 3: [], 4: []}
     mult_tags = {1: [], 2: [], 3: [], 4: [], 5: []}
-    tag_count = 0
+    col_count = 0
 
     if not scenes:
         raise Exception('No scenes found')
@@ -142,21 +134,29 @@ def trajectory_type(rows, path, fps, track_id=0):
         ## Primary Path
         ped_interest = scene[0]
 
-        ## Assert Test Scene length
+        # Assert Test Scene length
         if test:
-            assert len(scenes_test[index][0]) < 9, 'Scene Test not adequate length'
+            # print("Rows: ", len(scenes_test[index][0]))
+            assert len(scenes_test[index][0]) >= 9, 'Scene Test not adequate length'
+        # if test:
+        #     print("Rows: ", len(scenes_test[index][0]))
+        #     if len(scenes_test[index][0]) > 9: 
+        #         # print(scene[0][0].pedestrian, scene[0][0].frame)
+        #         print(scenes_test[index][0])
+        #         raise ValueError
 
         ## Check Collision
         if check_collision(scene):
+            col_count += 1
             continue
 
         ## Get Tag
         tag, mult_tag = get_type(scene)
 
         ## Update Tags
-        tags[tag].append(tag_count)
+        tags[tag].append(track_id)
         for tt in mult_tag:
-            mult_tags[tt].append(tag_count)
+            mult_tags[tt].append(track_id)
 
         ## Filtered scenes and Frames
         new_frames |= set(ped_interest[i].frame for i in range(len(ped_interest)))
@@ -169,7 +169,7 @@ def trajectory_type(rows, path, fps, track_id=0):
 
         ## Append to list of scenes_test as well if Test Set
         if test:
-            new_frames_test |= set(ped_interest[i].frame for i in range(len(scenes_test[index][0])))
+            new_frames_test |= set(ped_interest[i].frame for i in range(9))
             new_scenes_test.append(
                 trajnettools.data.SceneRow(track_id, ped_interest[0].pedestrian,
                                            ped_interest[0].frame, ped_interest[-1].frame, fps, 0))
@@ -181,5 +181,13 @@ def trajectory_type(rows, path, fps, track_id=0):
     write(rows, path, new_scenes, new_frames)
     if test:
         write(rows, path_test, new_scenes_test, new_frames_test) 
+
+## Stats
+    # Number of collisions found
+    print("Col Count: ", col_count)
+
+    print("Index: ", index)
+    # Types:
+    print("Tags: ", len(mult_tags[1]), len(mult_tags[2]), len(mult_tags[3]), len(mult_tags[4]))
 
     return track_id

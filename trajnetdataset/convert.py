@@ -8,7 +8,7 @@ import trajnettools
 
 from . import readers
 from .scene import Scenes
-
+from .get_type import trajectory_type
 
 def biwi(sc, input_file):
     print('processing ' + input_file)
@@ -77,20 +77,26 @@ def cff(sc, input_file):
             .filter(lambda r: r is not None)
             .cache())
 
+def controlled(sc, input_file):
+    print('processing ' + input_file)
+    return (sc
+            .textFile(input_file)
+            .map(readers.controlled)
+            .cache())
+
 def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2,fps=2.5, order_frames=False):
+    
     ## To handle two different time stamps of cff
     if order_frames:
         frames = sorted(set(input_rows.map(lambda r: r.frame).toLocalIterator()), key=lambda frame: frame % 100000)
     else:
         frames = sorted(set(input_rows.map(lambda r: r.frame).toLocalIterator()))
+    # split
     train_split_index = int(len(frames) * train_fraction)
     val_split_index = train_split_index + int(len(frames) * val_fraction)
     train_frames = set(frames[:train_split_index])
-    print(len(train_frames))
     val_frames = set(frames[train_split_index:val_split_index])
-    print(len(val_frames))
     test_frames = set(frames[val_split_index:])
-    print(len(test_frames))
 
     # train dataset
     train_rows = input_rows.filter(lambda r: r.frame in train_frames)
@@ -112,10 +118,11 @@ def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2,fps=2.5,
     private_test_scenes = Scenes(start_scene_id=val_scenes.scene_id, chunk_stride=21, fps=fps)
     private_test_scenes.rows_to_file(test_rows, private_test_output)
 
+    print(" Entering Trajectory Type ")
     #Get Scene Types
-    train_id = trajectory_type(train_rows, output_file.replace('split', '').format('trainfilter'), fps=fps, track_id=0)
-    val_id   = trajectory_type(val_rows, output_file.replace('split', '').format('valfilter'), fps=fps, track_id=train_id)
-    test_id  = trajectory_type(test_rows, output_file.replace('split', '').format('test_privatefilter'), fps=fps, track_id=val_id)
+    train_id = trajectory_type(train_rows, output_file.replace('split', '').format('train'), fps=fps, track_id=0)
+    val_id   = trajectory_type(val_rows, output_file.replace('split', '').format('val'), fps=fps, track_id=train_id)
+    test_id  = trajectory_type(test_rows, output_file.replace('split', '').format('test_private'), fps=fps, track_id=val_id)
 
 def write_without_split(input_rows, output_file):
     Scenes().rows_to_file(input_rows, output_file)
@@ -124,51 +131,56 @@ def write_without_split(input_rows, output_file):
 def main():
     sc = pysparkling.Context()
 
-    # new datasets
-    write(wildtrack(sc, 'data/raw/wildtrack/Wildtrack_dataset/annotations_positions/*.json'),
-          'output/{split}/wildtrack.ndjson',fps = 2)
-    write(dukemtmc(sc, 'data/raw/duke/trainval.mat'),
-          'output/{split}/dukemtmc.ndjson')
-    write(syi(sc, 'data/raw/syi/0?????.txt'),
-          'output/{split}/syi.ndjson')
-   # cff
-    write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-10.csv'),
-          'output/{split}/cff_10.ndjson', order_frames=True)  
+    # # new datasets
+    # write(wildtrack(sc, 'data/raw/wildtrack/Wildtrack_dataset/annotations_positions/*.json'),
+    #       'output/{split}/wildtrack.ndjson',fps = 2)
+    # write(dukemtmc(sc, 'data/raw/duke/trainval.mat'),
+    #       'output/{split}/dukemtmc.ndjson')
+    # write(syi(sc, 'data/raw/syi/0?????.txt'),
+    #       'output/{split}/syi.ndjson')
+    # # cff
+    # write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-10.csv'),
+    #       'output/{split}/cff_10.ndjson', order_frames=True)  
 
-    # originally train
-    write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
-          'output/{split}/biwi_hotel.ndjson')
-    # write(crowds(sc, 'data/raw/crowds/arxiepiskopi1.vsp'),
-    #       'output/{split}/crowds_arxiepiskopi1.ndjson')
-    write(crowds(sc, 'data/raw/crowds/crowds_zara02.vsp'),
-          'output/{split}/crowds_zara02.ndjson')
-    write(crowds(sc, 'data/raw/crowds/crowds_zara03.vsp'),
-          'output/{split}/crowds_zara03.ndjson')
-    write(crowds(sc, 'data/raw/crowds/students001.vsp'),
-          'output/{split}/crowds_students001.ndjson')
-    write(crowds(sc, 'data/raw/crowds/students003.vsp'),
-          'output/{split}/crowds_students003.ndjson')
+    # # originally train
+    # write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
+    #       'output/{split}/biwi_hotel.ndjson')
+    # # write(crowds(sc, 'data/raw/crowds/arxiepiskopi1.vsp'),
+    # #       'output/{split}/crowds_arxiepiskopi1.ndjson')
+    # write(crowds(sc, 'data/raw/crowds/crowds_zara02.vsp'),
+    #       'output/{split}/crowds_zara02.ndjson')
+    # write(crowds(sc, 'data/raw/crowds/crowds_zara03.vsp'),
+    #       'output/{split}/crowds_zara03.ndjson')
+    # write(crowds(sc, 'data/raw/crowds/students001.vsp'),
+    #       'output/{split}/crowds_students001.ndjson')
+    # write(crowds(sc, 'data/raw/crowds/students003.vsp'),
+    #       'output/{split}/crowds_students003.ndjson')
 
-    # originally test
-    write_without_split(biwi(sc, 'data/raw/biwi/seq_eth/obsmat.txt'),
-                        'output/test_holdout/biwi_eth.ndjson')
-    write_without_split(crowds(sc, 'data/raw/crowds/crowds_zara01.vsp'),
-                        'output/test_holdout/crowds_zara01.ndjson')
-    write_without_split(crowds(sc, 'data/raw/crowds/uni_examples.vsp'),
-                        'output/test_holdout/crowds_uni_examples.ndjson')
+    # # synthetic data
+    # write(controlled(sc, 'data/raw/controlled/orca_traj_overfit_initialize.txt'),
+    #       'syn_output/{split}/collision_avoidance.ndjson')
+    write(controlled(sc, 'data/raw/controlled/social_force_traj_overfit_initialize.txt'),
+          'syn_output/{split}/sf_collision_avoidance.ndjson')
+    # # originally test
+    # write_without_split(biwi(sc, 'data/raw/biwi/seq_eth/obsmat.txt'),
+    #                     'output/test_holdout/biwi_eth.ndjson')
+    # write_without_split(crowds(sc, 'data/raw/crowds/crowds_zara01.vsp'),
+    #                     'output/test_holdout/crowds_zara01.ndjson')
+    # write_without_split(crowds(sc, 'data/raw/crowds/uni_examples.vsp'),
+    #                     'output/test_holdout/crowds_uni_examples.ndjson')
 
-    # unused datasets
-    write_without_split(edinburgh(sc, 'data/raw/edinburgh/tracks.*.zip'),
-                        'output/unused/edinburgh.ndjson')
-    write_without_split(mot(sc, 'data/raw/mot/pets2009_s2l1.txt'),
-                        'output/unused/mot_pets2009_s2l1.ndjson')
+    # # unused datasets
+    # write_without_split(edinburgh(sc, 'data/raw/edinburgh/tracks.*.zip'),
+    #                     'output/unused/edinburgh.ndjson')
+    # write_without_split(mot(sc, 'data/raw/mot/pets2009_s2l1.txt'),
+    #                     'output/unused/mot_pets2009_s2l1.ndjson')
 
-    # compress the outputs
-    subprocess.check_output(['tar', '-czf', 'output/train.tar.gz', 'output/train'])
-    subprocess.check_output(['tar', '-czf', 'output/val.tar.gz', 'output/val'])
-    subprocess.check_output(['tar', '-czf', 'output/test.tar.gz', 'output/test'])
-    subprocess.check_output(['tar', '-czf', 'output/test_private.tar.gz', 'output/test_private'])
-    subprocess.check_output(['tar', '-czf', 'output/unused.tar.gz', 'output/unused'])
+    # # compress the outputs
+    # subprocess.check_output(['tar', '-czf', 'output/train.tar.gz', 'output/train'])
+    # subprocess.check_output(['tar', '-czf', 'output/val.tar.gz', 'output/val'])
+    # subprocess.check_output(['tar', '-czf', 'output/test.tar.gz', 'output/test'])
+    # subprocess.check_output(['tar', '-czf', 'output/test_private.tar.gz', 'output/test_private'])
+    # subprocess.check_output(['tar', '-czf', 'output/unused.tar.gz', 'output/unused'])
 
 
 if __name__ == '__main__':

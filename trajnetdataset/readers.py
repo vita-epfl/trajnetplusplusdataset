@@ -232,3 +232,10 @@ def cff(line):
                         float(line[3])/1000)
     else:
         return None
+
+def controlled(line):
+    line = [e for e in line.split(', ') if e != '']
+    return TrackRow(int(float(line[0])),
+                    int(float(line[1])),
+                    float(line[2]),
+                    float(line[3]))
