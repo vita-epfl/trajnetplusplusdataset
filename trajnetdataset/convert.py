@@ -125,7 +125,7 @@ def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2,fps=2.5,
     test_id  = trajectory_type(test_rows, output_file.replace('split', '').format('test_private'), fps=fps, track_id=val_id)
 
 def write_without_split(input_rows, output_file):
-    Scenes().rows_to_file(input_rows, output_file)
+    Scenes(fps=2.5).rows_to_file(input_rows, output_file)
 
 
 def main():
@@ -157,10 +157,11 @@ def main():
     #       'output/{split}/crowds_students003.ndjson')
 
     # # synthetic data
-    # write(controlled(sc, 'data/raw/controlled/orca_traj_overfit_initialize.txt'),
-    #       'syn_output/{split}/collision_avoidance.ndjson')
-    write(controlled(sc, 'data/raw/controlled/social_force_traj_overfit_initialize.txt'),
-          'syn_output/{split}/sf_collision_avoidance.ndjson')
+    write(controlled(sc, 'data/raw/controlled/orca_traj_3_overfit_initialize.txt'),
+          'syn_output/{split}/collision_avoidance_3.ndjson')
+    # write(controlled(sc, 'data/raw/controlled/social_force_traj_overfit_initialize.txt'),
+    #       'syn_output/{split}/sf_collision_avoidance.ndjson')
+    
     # # originally test
     # write_without_split(biwi(sc, 'data/raw/biwi/seq_eth/obsmat.txt'),
     #                     'output/test_holdout/biwi_eth.ndjson')

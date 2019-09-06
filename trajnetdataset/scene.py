@@ -5,7 +5,7 @@ from trajnettools import SceneRow
 
 
 class Scenes(object):
-    def __init__(self, fps, start_scene_id=0, chunk_size=21, chunk_stride=5, visible_chunk=None):
+    def __init__(self, fps, start_scene_id=0, chunk_size=21, chunk_stride=3, visible_chunk=None):
         self.scene_id = start_scene_id
         self.chunk_size = chunk_size
         self.chunk_stride = chunk_stride
@@ -19,7 +19,7 @@ class Scenes(object):
         return (row1.x - row2.x)**2 + (row1.y - row2.y)**2
 
     @staticmethod
-    def close_pedestrians(rows, cell_size=3):
+    def close_pedestrians(rows, cell_size=5):
         """Fast computation of spatially close pedestrians.
 
         By frame, get the list of pedestrian ids that or close to other
@@ -70,7 +70,7 @@ class Scenes(object):
                 [path[ii].frame for ii in range(i, i + self.chunk_size)]
                 for i in range(0, len(path) - self.chunk_size + 1, self.chunk_stride)
                 # filter for pedestrians moving by more than 1 meter
-                if self.euclidean_distance_2(path[i], path[i+self.chunk_size-1]) > 1.0
+                if self.euclidean_distance_2(path[i], path[i+self.chunk_size-1]) > 0.2
             ])
 
             # filter out scenes with large gaps in frame numbers

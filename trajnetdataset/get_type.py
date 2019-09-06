@@ -1,9 +1,7 @@
 import os
-# import ndjson
 import trajnettools
 import numpy as np
 import pysparkling
-# from joblib import Parallel, delayed
 from .kalman import predict as kalman_predict
 from .interactions import *
 import random
@@ -138,43 +136,42 @@ def trajectory_type(rows, path, fps, track_id=0):
         if test:
             # print("Rows: ", len(scenes_test[index][0]))
             assert len(scenes_test[index][0]) >= 9, 'Scene Test not adequate length'
-        # if test:
-        #     print("Rows: ", len(scenes_test[index][0]))
-        #     if len(scenes_test[index][0]) > 9: 
-        #         # print(scene[0][0].pedestrian, scene[0][0].frame)
-        #         print(scenes_test[index][0])
-        #         raise ValueError
 
         ## Check Collision
-        if check_collision(scene):
-            col_count += 1
-            continue
+        ## Used in CFF Datasets to account for imperfect tracking
+        # if check_collision(scene):
+        #     col_count += 1
+        #     continue
 
         ## Get Tag
         tag, mult_tag = get_type(scene)
 
-        ## Update Tags
-        tags[tag].append(track_id)
-        for tt in mult_tag:
-            mult_tags[tt].append(track_id)
+        ## Acceptance
+        accept = [0.1, 1.0, 1.0, 1.0, 1.0]
 
-        ## Filtered scenes and Frames
-        new_frames |= set(ped_interest[i].frame for i in range(len(ped_interest)))
-        # new_scenes.append(
-        #     trajnettools.data.SceneRow(track_id, ped_interest[0].pedestrian,
-        #                                ped_interest[0].frame, ped_interest[-1].frame, fps, tag))
-        new_scenes.append(
-            trajnettools.data.SceneRow(track_id, ped_interest[0].pedestrian,
-                                       ped_interest[0].frame, ped_interest[-1].frame, fps, mult_tag))
+        if np.random.uniform() < accept[tag - 1]:
+            ## Update Tags
+            tags[tag].append(track_id)
+            for tt in mult_tag:
+                mult_tags[tt].append(track_id)
 
-        ## Append to list of scenes_test as well if Test Set
-        if test:
-            new_frames_test |= set(ped_interest[i].frame for i in range(9))
-            new_scenes_test.append(
+            ## Filtered scenes and Frames
+            new_frames |= set(ped_interest[i].frame for i in range(len(ped_interest)))
+            # new_scenes.append(
+            #     trajnettools.data.SceneRow(track_id, ped_interest[0].pedestrian,
+            #                                ped_interest[0].frame, ped_interest[-1].frame, fps, tag))
+            new_scenes.append(
                 trajnettools.data.SceneRow(track_id, ped_interest[0].pedestrian,
-                                           ped_interest[0].frame, ped_interest[-1].frame, fps, 0))
+                                           ped_interest[0].frame, ped_interest[-1].frame, fps, mult_tag))
 
-        track_id += 1
+            ## Append to list of scenes_test as well if Test Set
+            if test:
+                new_frames_test |= set(ped_interest[i].frame for i in range(9))
+                new_scenes_test.append(
+                    trajnettools.data.SceneRow(track_id, ped_interest[0].pedestrian,
+                                               ped_interest[0].frame, ped_interest[-1].frame, fps, 0))
+
+            track_id += 1
 
 
     # Writes the Final Scenes and Frames
@@ -183,11 +180,13 @@ def trajectory_type(rows, path, fps, track_id=0):
         write(rows, path_test, new_scenes_test, new_frames_test) 
 
 ## Stats
-    # Number of collisions found
-    print("Col Count: ", col_count)
 
-    print("Index: ", index)
+    # Number of collisions found
+    # print("Col Count: ", col_count)
+
+    print("Total Scenes: ", index)
+    print("Total Shortlisted Scenes: ", track_id)
     # Types:
-    print("Tags: ", len(mult_tags[1]), len(mult_tags[2]), len(mult_tags[3]), len(mult_tags[4]))
+    print("Type 1: ", len(mult_tags[1]), "Type 2: ",  len(mult_tags[2]), "Type 3: ", len(mult_tags[3]), "Type 4: ", len(mult_tags[4]), "Type 5: ", len(mult_tags[5]))
 
     return track_id

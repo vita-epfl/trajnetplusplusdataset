@@ -67,7 +67,7 @@ def main():
             plt.plot(ped_paths[:, i, 0], ped_paths[:, i, 1], label='Neigh')            
         plt.plot(goals[0][0], goals[0][1], 'bo', label='Goal')
         # print(np.array(goals).shape)
-        plt.legend()
+        # plt.legend()
         plt.show()
         plt.close()
 
@@ -78,7 +78,7 @@ def main():
             plt.plot(simulated[:, i, 0], simulated[:, i, 1], label='Neigh')            
         plt.plot(goals[0][0], goals[0][1], 'bo', label='Goal')
         # print(np.array(goals).shape)
-        plt.legend()
+        # plt.legend()
         plt.show()
         plt.close()
 

@@ -4,15 +4,10 @@ import rvo2
 import socialforce
 import argparse
 import os
-SQUARE_LENGTH = 20
 
-
-### Synthetic Data ####
-### Initially: scenario3 - 60%, scenario2 - 20%, random - 10%, scenario1 - 10% ###  
-#######################
+### Controlled Data ####
 
 def initialize(scenario, num_ped, sim=None):
-
     if scenario == 'random':
         return random_initialize(num_ped, sim)
     elif scenario == 'scenario_1':
@@ -35,8 +30,9 @@ def overfit_initialize(num_ped, sim):
     num_ped = 8
     for i in range(8):
         random_number = random.uniform(-0.3, 0.3)
+        py = [-6, 6]
         # py = [-5, 5]
-        py = [-7, 7]
+        # py = [-7, 7]
         gy = [7, -7]
         for j in range(2):
             px = x[i] + random_number
@@ -77,7 +73,7 @@ def scenario1_initialize(num_ped, sim):
             if sim is not None:
                 sim.addAgent((px, py_))
 
-            rand_speed = random.uniform(0.8, 1.2)
+            rand_speed = random.uniform(0.8, 1)
             vx = 0
             vy = rand_speed * np.sign(gy[j] - py_)
             speed.append((vx, vy))
@@ -85,23 +81,7 @@ def scenario1_initialize(num_ped, sim):
     trajectories = [[positions[i]] for i in range(num_ped)]
     return trajectories, positions, goals, speed
 
-
-def scenario2_initialize(num_ped, sim=None):
-    # initialize agents' starting and goal positions
-    pass
-
-
-def scenario3_initialize(num_ped, sim=None):
-    # initialize agents' starting and goal positions
-    pass
-
-
-def random_initialize(num_ped, sim=None):
-    # initialize agents' starting and goal positions
-    pass
-
-
-def generate_orca_trajectory(scenario, num_ped, end_range=1):
+def generate_orca_trajectory(scenario, num_ped, end_range=0.8):
     sim = rvo2.PyRVOSimulator(1 / 2.5, 3, 10, 1.5, 2, 0.4, 2)
 
     ##Initiliaze a scene
@@ -129,7 +109,7 @@ def generate_orca_trajectory(scenario, num_ped, end_range=1):
                 reaching_goal.append(False)
                 velocity = np.array((goals[i][0] - position[0], goals[i][1] - position[1]))
                 speed = np.linalg.norm(velocity)
-                pref_vel = velocity / speed if speed > 1.2 else velocity
+                pref_vel = velocity / speed if speed > 1 else velocity
                 sim.setAgentPrefVelocity(i, tuple(pref_vel.tolist()))
         count += 1
         done = all(reaching_goal)
@@ -199,7 +179,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--simulator', default='orca',
                         choices=('orca', 'social_force'))
-    parser.add_argument('--simulation-type',  required=True, nargs='+')
+    parser.add_argument('--simulation-type', default=['overfit_initialize'],
+                        choices=('overfit', 'overfit_initialize2'))
 
     args = parser.parse_args()
 
@@ -215,7 +196,7 @@ def main():
             # N = 80
         else:
             # N = 1500
-            N = 50
+            N = 150
 
         count = 0
         last_frame = -5
@@ -223,6 +204,7 @@ def main():
             ## Print every 10th scene
             if (i+1) % 10 == 0:
                 print(i)
+
             ##Decide number of people
             if simulation != 'scenario_1':
                 num_ped = random.randint(20, 40)
@@ -235,13 +217,8 @@ def main():
             ##Generate the scene
             trajectories = generate_trajectory(simulator=args.simulator, scenario=simulation,
                                                num_ped=num_ped)
-            ##Trajectories = Trajectories of all agents
 
             ##Write the Scene to Txt
-            ##################################################
-            ##WHY '+5' -->  Just a gap needed.  DONE 
-            ##Does it work if only 1 trajectory --->  Not currently 
-            ##################################################
             last_frame = write_to_txt(trajectories, 'data/raw/controlled/' + args.simulator + '_traj_'
                                       + simulation + '.txt', count=count, frame=last_frame+5)
             count += num_ped
