@@ -76,9 +76,14 @@ def get_type(scene):
     if mult_tag == []:
         mult_tag.append(4)
 
+    # Interaction Types
+    if 3 in mult_tag:
+        int_type = get_interaction_type(scene_xy)
+        print(int_type)
+
     # Group 
-    if group(scene_xy, grp_dist_thresh, grp_std_thresh):
-        mult_tag.append(5)        
+    # if group(scene_xy, grp_dist_thresh, grp_std_thresh):
+    #     mult_tag.append(5)        
 
     return mult_tag[0], mult_tag
 

@@ -147,18 +147,18 @@ def main():
     #       'output/{split}/biwi_hotel.ndjson')
     # # write(crowds(sc, 'data/raw/crowds/arxiepiskopi1.vsp'),
     # #       'output/{split}/crowds_arxiepiskopi1.ndjson')
-    # write(crowds(sc, 'data/raw/crowds/crowds_zara02.vsp'),
-    #       'output/{split}/crowds_zara02.ndjson')
-    # write(crowds(sc, 'data/raw/crowds/crowds_zara03.vsp'),
-    #       'output/{split}/crowds_zara03.ndjson')
+    write(crowds(sc, 'data/raw/crowds/crowds_zara02.vsp'),
+          'output/{split}/crowds_zara02.ndjson')
+    write(crowds(sc, 'data/raw/crowds/crowds_zara03.vsp'),
+          'output/{split}/crowds_zara03.ndjson')
     # write(crowds(sc, 'data/raw/crowds/students001.vsp'),
     #       'output/{split}/crowds_students001.ndjson')
     # write(crowds(sc, 'data/raw/crowds/students003.vsp'),
     #       'output/{split}/crowds_students003.ndjson')
 
     # # synthetic data
-    write(controlled(sc, 'data/raw/controlled/orca_traj_3_overfit_initialize.txt'),
-          'syn_output/{split}/collision_avoidance_3.ndjson')
+    # write(controlled(sc, 'data/raw/controlled/orca_traj_3_overfit_initialize.txt'),
+    #       'syn_output/{split}/collision_avoidance_3.ndjson')
     # write(controlled(sc, 'data/raw/controlled/social_force_traj_overfit_initialize.txt'),
     #       'syn_output/{split}/sf_collision_avoidance.ndjson')
     
