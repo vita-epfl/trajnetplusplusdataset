@@ -164,16 +164,16 @@ def trajectory_type(rows, path, fps, track_id=0):
             for st in sub_tag:
                 sub_tags[st].append(track_id)
 
-            # print("Overall Tag: ", mult_tag.append(sub_tag))
+            ## Define Scene_Tag
+            scene_tag = []
+            scene_tag.append(tag)
+            scene_tag.append(sub_tag)
 
             ## Filtered scenes and Frames
             new_frames |= set(ped_interest[i].frame for i in range(len(ped_interest)))
-            # new_scenes.append(
-            #     trajnettools.data.SceneRow(track_id, ped_interest[0].pedestrian,
-            #                                ped_interest[0].frame, ped_interest[-1].frame, fps, tag))
             new_scenes.append(
                 trajnettools.data.SceneRow(track_id, ped_interest[0].pedestrian,
-                                           ped_interest[0].frame, ped_interest[-1].frame, fps, mult_tag))
+                                           ped_interest[0].frame, ped_interest[-1].frame, fps, scene_tag))
 
             ## Append to list of scenes_test as well if Test Set
             if test:
@@ -199,7 +199,7 @@ def trajectory_type(rows, path, fps, track_id=0):
     # print("Total Shortlisted Scenes: ", track_id)
     # Types:
     print("Main Tags")
-    print("Type 1: ", len(mult_tags[1]), "Type 2: ",  len(mult_tags[2]), "Type 3: ", len(mult_tags[3]), "Type 4: ", len(mult_tags[4]))
+    print("Type 1: ", len(tags[1]), "Type 2: ",  len(tags[2]), "Type 3: ", len(tags[3]), "Type 4: ", len(tags[4]))
     print("Sub Tags")
     print("Type 1: ", len(sub_tags[1]), "Type 2: ",  len(sub_tags[2]), "Type 3: ", len(sub_tags[3]), "Type 4: ", len(sub_tags[4]))
 

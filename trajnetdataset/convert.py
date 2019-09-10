@@ -77,6 +77,13 @@ def cff(sc, input_file):
             .filter(lambda r: r is not None)
             .cache())
 
+def lcas(sc, input_file):
+    print('processing ' + input_file)
+    return (sc
+            .textFile(input_file)
+            .map(readers.lcas)
+            .cache())
+
 def controlled(sc, input_file):
     print('processing ' + input_file)
     return (sc
@@ -161,7 +168,12 @@ def main():
     # # cff
     # write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-10.csv'),
           # 'output_pre/{split}/cff_10.ndjson', order_frames=True)  
-    categorize(sc, 'output_pre/{split}/cff_10.ndjson')
+    # categorize(sc, 'output_pre/{split}/cff_10.ndjson')
+
+    # lcas
+    write(lcas(sc, 'data/raw/lcas/data.csv'),
+          'output_pre/{split}/lcas.ndjson')
+    categorize(sc, 'output_pre/{split}/lcas.ndjson')
 
     # # originally train
     # write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
