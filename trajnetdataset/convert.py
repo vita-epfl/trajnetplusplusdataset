@@ -84,8 +84,16 @@ def controlled(sc, input_file):
             .map(readers.controlled)
             .cache())
 
-def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2,fps=2.5, order_frames=False):
-    
+def get_trackrows(sc, input_file):
+    print('processing ' + input_file)
+    return (sc
+            .textFile(input_file)
+            .map(readers.get_trackrows)
+            .filter(lambda r: r is not None)
+            .cache())
+
+def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2, fps=2.5, order_frames=False):
+    print(" Entering Writing ")
     ## To handle two different time stamps of cff
     if order_frames:
         frames = sorted(set(input_rows.map(lambda r: r.frame).toLocalIterator()), key=lambda frame: frame % 100000)
@@ -118,15 +126,27 @@ def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2,fps=2.5,
     private_test_scenes = Scenes(start_scene_id=val_scenes.scene_id, chunk_stride=21, fps=fps)
     private_test_scenes.rows_to_file(test_rows, private_test_output)
 
+def write_without_split(input_rows, output_file, fps=2.5):
+    Scenes(fps=fps).rows_to_file(input_rows, output_file)
+
+def categorize(sc, input_file, fps=2.5):
     print(" Entering Trajectory Type ")
-    #Get Scene Types
-    train_id = trajectory_type(train_rows, output_file.replace('split', '').format('train'), fps=fps, track_id=0)
-    val_id   = trajectory_type(val_rows, output_file.replace('split', '').format('val'), fps=fps, track_id=train_id)
-    test_id  = trajectory_type(test_rows, output_file.replace('split', '').format('test_private'), fps=fps, track_id=val_id)
+    #Train
+    train_rows = get_trackrows(sc, input_file.replace('split', '').format('train'))
+    train_id = trajectory_type(train_rows, input_file.replace('split', '').format('train'), fps=fps, track_id=0)
 
-def write_without_split(input_rows, output_file):
-    Scenes(fps=2.5).rows_to_file(input_rows, output_file)
+    #Val
+    val_rows = get_trackrows(sc, input_file.replace('split', '').format('val'))
+    val_id   = trajectory_type(val_rows, input_file.replace('split', '').format('val'), fps=fps, track_id=train_id)
 
+    #Test
+    test_rows = get_trackrows(sc, input_file.replace('split', '').format('test_private'))    
+    test_id  = trajectory_type(test_rows, input_file.replace('split', '').format('test_private'), fps=fps, track_id=val_id)
+
+def categorize_without_split(sc, input_file, fps=2.5):
+    print(" Entering Trajectory Type ")
+    track_rows = get_trackrows(sc, input_file)
+    track_id = trajectory_type(track_rows, input_file, fps=fps, track_id=0)
 
 def main():
     sc = pysparkling.Context()
@@ -140,17 +160,19 @@ def main():
     #       'output/{split}/syi.ndjson')
     # # cff
     # write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-10.csv'),
-    #       'output/{split}/cff_10.ndjson', order_frames=True)  
+          # 'output_pre/{split}/cff_10.ndjson', order_frames=True)  
+    categorize(sc, 'output_pre/{split}/cff_10.ndjson')
 
     # # originally train
     # write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
-    #       'output/{split}/biwi_hotel.ndjson')
+    #       'output_pre/{split}/biwi_hotel.ndjson')
+    # categorize(sc, 'output_pre/{split}/biwi_hotel.ndjson')
     # # write(crowds(sc, 'data/raw/crowds/arxiepiskopi1.vsp'),
     # #       'output/{split}/crowds_arxiepiskopi1.ndjson')
-    write(crowds(sc, 'data/raw/crowds/crowds_zara02.vsp'),
-          'output/{split}/crowds_zara02.ndjson')
-    write(crowds(sc, 'data/raw/crowds/crowds_zara03.vsp'),
-          'output/{split}/crowds_zara03.ndjson')
+    # write(crowds(sc, 'data/raw/crowds/crowds_zara02.vsp'),
+    #       'output/{split}/crowds_zara02.ndjson')
+    # write(crowds(sc, 'data/raw/crowds/crowds_zara03.vsp'),
+    #       'output/{split}/crowds_zara03.ndjson')
     # write(crowds(sc, 'data/raw/crowds/students001.vsp'),
     #       'output/{split}/crowds_students001.ndjson')
     # write(crowds(sc, 'data/raw/crowds/students003.vsp'),

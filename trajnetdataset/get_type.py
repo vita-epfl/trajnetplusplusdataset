@@ -77,15 +77,16 @@ def get_type(scene):
         mult_tag.append(4)
 
     # Interaction Types
-    if 3 in mult_tag:
-        int_type = get_interaction_type(scene_xy)
-        print(int_type)
+    if mult_tag[0] == 3:
+        sub_tag = get_interaction_type(scene_xy)
+    else:
+        sub_tag = []
 
     # Group 
     # if group(scene_xy, grp_dist_thresh, grp_std_thresh):
     #     mult_tag.append(5)        
 
-    return mult_tag[0], mult_tag
+    return mult_tag[0], mult_tag, sub_tag
 
 def check_collision(scene):
         '''
@@ -99,7 +100,7 @@ def check_collision(scene):
         return False
 
 def write(rows, path, new_scenes, new_frames):
-    output_path = path.split('.')[0] + 'filter.ndjson'
+    output_path = path.replace('output_pre', 'output')
     pysp_tracks = rows.filter(lambda r: r.frame in new_frames).map(trajnettools.writers.trajnet)
     pysp_scenes = pysparkling.Context().parallelize(new_scenes).map(trajnettools.writers.trajnet)
     pysp_scenes.union(pysp_tracks).saveAsTextFile(output_path)
@@ -127,7 +128,8 @@ def trajectory_type(rows, path, fps, track_id=0):
 
     ## Initialize Tag Stats to be collected
     tags = {1: [], 2: [], 3: [], 4: []}
-    mult_tags = {1: [], 2: [], 3: [], 4: [], 5: []}
+    mult_tags = {1: [], 2: [], 3: [], 4: []}
+    sub_tags = {1: [], 2: [], 3: [], 4: []}
     col_count = 0
 
     if not scenes:
@@ -149,7 +151,7 @@ def trajectory_type(rows, path, fps, track_id=0):
         #     continue
 
         ## Get Tag
-        tag, mult_tag = get_type(scene)
+        tag, mult_tag, sub_tag = get_type(scene)
 
         ## Acceptance
         accept = [0.1, 1.0, 1.0, 1.0, 1.0]
@@ -159,6 +161,10 @@ def trajectory_type(rows, path, fps, track_id=0):
             tags[tag].append(track_id)
             for tt in mult_tag:
                 mult_tags[tt].append(track_id)
+            for st in sub_tag:
+                sub_tags[st].append(track_id)
+
+            # print("Overall Tag: ", mult_tag.append(sub_tag))
 
             ## Filtered scenes and Frames
             new_frames |= set(ped_interest[i].frame for i in range(len(ped_interest)))
@@ -190,8 +196,11 @@ def trajectory_type(rows, path, fps, track_id=0):
     # print("Col Count: ", col_count)
 
     print("Total Scenes: ", index)
-    print("Total Shortlisted Scenes: ", track_id)
+    # print("Total Shortlisted Scenes: ", track_id)
     # Types:
-    print("Type 1: ", len(mult_tags[1]), "Type 2: ",  len(mult_tags[2]), "Type 3: ", len(mult_tags[3]), "Type 4: ", len(mult_tags[4]), "Type 5: ", len(mult_tags[5]))
+    print("Main Tags")
+    print("Type 1: ", len(mult_tags[1]), "Type 2: ",  len(mult_tags[2]), "Type 3: ", len(mult_tags[3]), "Type 4: ", len(mult_tags[4]))
+    print("Sub Tags")
+    print("Type 1: ", len(sub_tags[1]), "Type 2: ",  len(sub_tags[2]), "Type 3: ", len(sub_tags[3]), "Type 4: ", len(sub_tags[4]))
 
     return track_id

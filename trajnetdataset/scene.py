@@ -5,7 +5,7 @@ from trajnettools import SceneRow
 
 
 class Scenes(object):
-    def __init__(self, fps, start_scene_id=0, chunk_size=21, chunk_stride=3, visible_chunk=None):
+    def __init__(self, fps, start_scene_id=0, chunk_size=21, chunk_stride=7, visible_chunk=None):
         self.scene_id = start_scene_id
         self.chunk_size = chunk_size
         self.chunk_stride = chunk_stride

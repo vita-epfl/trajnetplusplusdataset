@@ -102,7 +102,7 @@ def check_interaction(rows, pos_range=15, dist_thresh=5, choice='pos', pos_angle
 def non_linear(scene):
     primary_prediction, _ = kalman.predict(scene)[0] 
     score = metrics.final_l2(scene[0], primary_prediction)
-    return score > 1.0
+    return score > 0.8
 
 def interaction_length(interaction_matrix, length=1):
     interaction_sum = np.sum(interaction_matrix, axis=0)
@@ -125,31 +125,14 @@ def group(rows, dist_thresh=0.8, std_thresh=0.2):
 def get_interaction_type(rows):    
     interaction_type = []
     if lf(rows):
-        interaction_type.append('a')
+        interaction_type.append(1)
     if ca(rows):
-        interaction_type.append('b')
+        interaction_type.append(2)
     if group(rows):
-        interaction_type.append('c')
+        interaction_type.append(3)
     if interaction_type == []:
-        interaction_type.append('d')    
+        interaction_type.append(4)    
     return interaction_type
-
-
-# def check_group(rows, dist_thresh=0.8, std_thresh=0.1):
-#     path = rows[:, 0]
-#     neigh_path = rows[:, 1:]
-#     # dist_rel = compute_dist_rel(path, neigh_path)
-#     dist_rel = np.linalg.norm((neigh_path - path[:, np.newaxis, :]), axis=2)
-
-#     mean_dist = np.mean(dist_rel, axis=0)
-#     # print("Mean Dist Shape: ", mean_dist.shape)
-#     std_dist = np.std(dist_rel, axis=0)
-#     # print(std_dist.shape)
-
-#     group_matrix = (mean_dist < dist_thresh) & (std_dist < std_thresh)
-#     # print("Group Matrix: ", group_matrix)
-
-#     return np.any(group_matrix)
 
 def check_group(rows, dist_thresh=0.8, std_thresh=0.1):
     ## Identify Groups
