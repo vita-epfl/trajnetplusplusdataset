@@ -4,7 +4,6 @@ import numpy as np
 
 import matplotlib.pyplot as plt
    
-
 def compute_velocity_interaction(path, neigh_path, time_param=(9, 21, 9, 3)):
     ## Computes the angle between velocity of neighbours and velocity of pp
 
@@ -19,7 +18,7 @@ def compute_velocity_interaction(path, neigh_path, time_param=(9, 21, 9, 3)):
     for n in range(neigh_vel.shape[1]):
         theta2 = np.arctan2(neigh_vel[:, n, 1], neigh_vel[:, n, 0])
         theta_diff = (theta2 - theta1) * 180 / np.pi
-        theta_diff = (theta_diff - 180) % 360
+        theta_diff = theta_diff % 360
         theta_sign = theta_diff > 180
         sign_interaction[:, n] = theta_sign
         vel_interaction[:, n] = theta_diff       
@@ -47,18 +46,19 @@ def compute_theta_interaction(path, neigh_path, time_param=(9, 21, 9, 3)):
     return theta_interaction, sign_interaction
 
 def compute_dist_rel(path, neigh_path, time_param=(9, 21, 9, 3)):
-    ## Distance between pp and neighbour 
-    ## Output Shape: T_pred x Number_of_Neighbours
+    ## Distance between pp and neighbour
+
     T_OBS, T_SEQ, T_INT, T_STR = time_param
     dist_rel = np.linalg.norm((neigh_path[T_INT:T_SEQ] - path[T_INT:T_SEQ][:, np.newaxis, :]), axis=2)
     return dist_rel
 
 
-def compute_interaction(theta_rel, dist_rel, angle, dist_thresh, angle_range):
+def compute_interaction(theta_rel_orig, dist_rel, angle, dist_thresh, angle_range):
     ## Interaction is defined as 
     ## 1. distance < threshold and 
     ## 2. angle between velocity of pp and line joining pp to neighbours
 
+    theta_rel = np.copy(theta_rel_orig)
     angle_low = (angle - angle_range) 
     angle_high = (angle + angle_range) 
     if (angle - angle_range) < 0 :
@@ -69,7 +69,7 @@ def compute_interaction(theta_rel, dist_rel, angle, dist_thresh, angle_range):
     return interaction_matrix
 
 
-def check_interaction(rows, pos_range=15, dist_thresh=5, choice='pos', pos_angle=0,  vel_angle=0, vel_range=20, output='all'):    
+def check_interaction(rows, pos_range=15, dist_thresh=5, choice='pos', pos_angle=0,  vel_angle=0, vel_range=15, output='all'):    
 
     path = rows[:, 0]
     neigh_path = rows[:, 1:]
@@ -98,11 +98,6 @@ def check_interaction(rows, pos_range=15, dist_thresh=5, choice='pos', pos_angle
         return interaction_matrix
 
     return np.any(interaction_matrix)
-
-def non_linear(scene):
-    primary_prediction, _ = kalman.predict(scene)[0] 
-    score = metrics.final_l2(scene[0], primary_prediction)
-    return score > 0.8
 
 def interaction_length(interaction_matrix, length=1):
     interaction_sum = np.sum(interaction_matrix, axis=0)
@@ -134,7 +129,7 @@ def get_interaction_type(rows):
         interaction_type.append(4)    
     return interaction_type
 
-def check_group(rows, dist_thresh=0.8, std_thresh=0.1):
+def check_group(rows, dist_thresh=0.8, std_thresh=0.2):
     ## Identify Groups
     ## dist_thresh: Distance threshold to be withinin a group
     ## std_thresh: Std deviation threshold for variation of distance

@@ -2,7 +2,7 @@ data/raw/
 data/3DMOT2015Labels/
 data/cvpr2015_pedestrianWalkingPathDataset.rar
 data/Wildtrack_dataset_full.zip
-output/
+output*
 
 # Python
 venv*/

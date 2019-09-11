@@ -167,13 +167,16 @@ def main():
     #       'output/{split}/syi.ndjson')
     # # cff
     # write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-10.csv'),
-          # 'output_pre/{split}/cff_10.ndjson', order_frames=True)  
+    #       'output_pre/{split}/cff_10.ndjson', order_frames=True)  
     # categorize(sc, 'output_pre/{split}/cff_10.ndjson')
 
-    # lcas
-    write(lcas(sc, 'data/raw/lcas/data.csv'),
-          'output_pre/{split}/lcas.ndjson')
-    categorize(sc, 'output_pre/{split}/lcas.ndjson')
+    # write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-06.csv'),
+    #       'output_pre/{split}/cff_06.ndjson', order_frames=True)  
+    # categorize(sc, 'output_pre/{split}/cff_06.ndjson')
+    # # lcas
+    # write(lcas(sc, 'data/raw/lcas/data.csv'),
+    #       'output_pre/{split}/lcas.ndjson')
+    # categorize(sc, 'output_pre/{split}/lcas.ndjson')
 
     # # originally train
     # write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
@@ -182,11 +185,13 @@ def main():
     # # write(crowds(sc, 'data/raw/crowds/arxiepiskopi1.vsp'),
     # #       'output/{split}/crowds_arxiepiskopi1.ndjson')
     # write(crowds(sc, 'data/raw/crowds/crowds_zara02.vsp'),
-    #       'output/{split}/crowds_zara02.ndjson')
+    #       'output_pre/{split}/crowds_zara02.ndjson')
+    categorize(sc, 'output_pre/{split}/crowds_zara02.ndjson')
     # write(crowds(sc, 'data/raw/crowds/crowds_zara03.vsp'),
     #       'output/{split}/crowds_zara03.ndjson')
     # write(crowds(sc, 'data/raw/crowds/students001.vsp'),
-    #       'output/{split}/crowds_students001.ndjson')
+    #       'output_pre/{split}/crowds_students001.ndjson')
+    # categorize(sc, 'output_pre/{split}/crowds_students001.ndjson')
     # write(crowds(sc, 'data/raw/crowds/students003.vsp'),
     #       'output/{split}/crowds_students003.ndjson')
 

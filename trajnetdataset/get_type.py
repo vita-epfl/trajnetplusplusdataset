@@ -16,15 +16,15 @@ def get_type(scene):
 
     ## Params
     static_threshold = 1.0
-    linear_threshold = 0.2
+    linear_threshold = 0.5
     
     ## Interactions
     inter_pos_range = 15
     inter_dist_thresh = 5
 
     ## Group
-    grp_dist_thresh = 2.0
-    grp_std_thresh = 0.5
+    grp_dist_thresh = 0.8
+    grp_std_thresh = 0.2
 
     ## Get xy-coordinates from trackRows
     scene_xy = trajnettools.Reader.paths_to_xy(scene)
@@ -39,8 +39,8 @@ def get_type(scene):
         '''
         return: True if the traj is linear according to Kalman
         '''
-        kalman_prediction = kalman_predict(scene)
-        return trajnettools.metrics.average_l2(scene[0], kalman_prediction) 
+        kalman_prediction, _ = kalman_predict(scene)[0]
+        return trajnettools.metrics.final_l2(scene[0], kalman_prediction) 
 
     ## Type 3
     def interaction(rows, pos_range=15, dist_thresh=5):
@@ -49,42 +49,45 @@ def get_type(scene):
         '''
         return check_interaction(rows, pos_range, dist_thresh)
 
+    ## Type 3
+    # def group(rows, dist_thresh=2, std_thresh=0.5):
+    #     '''
+    #     return: True if primary in a group
+    #     '''     
+    #     return check_group(rows, dist_thresh, std_thresh)
+
     ## Type 4 = not(Type 1 or Type 2 or Type 3)
 
-    ## Type 5
-    def group(rows, dist_thresh=2, std_thresh=0.5):
-        '''
-        return: True if primary in a group
-        '''     
-        return check_group(rows, dist_thresh, std_thresh)
 
     ## Category Tags
     mult_tag = []
+    sub_tag = []
+
     # Static
     if euclidean_distance(scene[0][0], scene[0][-1]) < static_threshold:
         mult_tag.append(1)
     
     # Linear
-    if linear_system(scene) < linear_threshold:
+    elif linear_system(scene) < linear_threshold:
         mult_tag.append(2)
 
     # Interactions
-    if interaction(scene_xy, pos_range=inter_pos_range, dist_thresh=inter_dist_thresh):
+    elif interaction(scene_xy, pos_range=inter_pos_range, dist_thresh=inter_dist_thresh) or group(scene_xy, grp_dist_thresh, grp_std_thresh):
         mult_tag.append(3)
 
     # Non-Linear (No explainable reason)
-    if mult_tag == []:
+    else:
         mult_tag.append(4)
+
+    # Non-Linear (No explainable reason)
+    # if mult_tag == []:
+    #     mult_tag.append(4)
 
     # Interaction Types
     if mult_tag[0] == 3:
         sub_tag = get_interaction_type(scene_xy)
     else:
-        sub_tag = []
-
-    # Group 
-    # if group(scene_xy, grp_dist_thresh, grp_std_thresh):
-    #     mult_tag.append(5)        
+        sub_tag = []       
 
     return mult_tag[0], mult_tag, sub_tag
 
@@ -201,6 +204,6 @@ def trajectory_type(rows, path, fps, track_id=0):
     print("Main Tags")
     print("Type 1: ", len(tags[1]), "Type 2: ",  len(tags[2]), "Type 3: ", len(tags[3]), "Type 4: ", len(tags[4]))
     print("Sub Tags")
-    print("Type 1: ", len(sub_tags[1]), "Type 2: ",  len(sub_tags[2]), "Type 3: ", len(sub_tags[3]), "Type 4: ", len(sub_tags[4]))
+    print("LF: ", len(sub_tags[1]), "CA: ",  len(sub_tags[2]), "Group: ", len(sub_tags[3]), "Others: ", len(sub_tags[4]))
 
     return track_id
