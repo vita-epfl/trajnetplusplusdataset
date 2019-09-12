@@ -224,6 +224,10 @@ def cff(line):
     if len(time) != 4:
         return None
 
+    ## Check Location
+    if line[1] != 'PIW':
+        return None
+
     ## Check Time Format
     if time[0][-3:] == 'T07':
         ped_id = int(line[4])

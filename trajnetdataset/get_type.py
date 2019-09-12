@@ -6,8 +6,6 @@ from .kalman import predict as kalman_predict
 from .interactions import *
 import random
 
-import matplotlib.pyplot as plt
-
 def get_type(scene):
     '''
     :param scene: All trajectories as TrackRows
@@ -16,7 +14,7 @@ def get_type(scene):
 
     ## Params
     static_threshold = 1.0
-    linear_threshold = 0.5
+    linear_threshold = 1.0
     
     ## Interactions
     inter_pos_range = 15
@@ -78,10 +76,6 @@ def get_type(scene):
     # Non-Linear (No explainable reason)
     else:
         mult_tag.append(4)
-
-    # Non-Linear (No explainable reason)
-    # if mult_tag == []:
-    #     mult_tag.append(4)
 
     # Interaction Types
     if mult_tag[0] == 3:
@@ -199,7 +193,6 @@ def trajectory_type(rows, path, fps, track_id=0):
     # print("Col Count: ", col_count)
 
     print("Total Scenes: ", index)
-    # print("Total Shortlisted Scenes: ", track_id)
     # Types:
     print("Main Tags")
     print("Type 1: ", len(tags[1]), "Type 2: ",  len(tags[2]), "Type 3: ", len(tags[3]), "Type 4: ", len(tags[4]))

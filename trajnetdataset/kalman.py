@@ -29,6 +29,10 @@ def predict(paths, predict_all=False):
                                    initial_state_mean=initial_state_mean)
         # kf.em([(r.x, r.y) for r in path[:9]], em_vars=['transition_matrices',
         #                                                'observation_matrices'])
+        myarray = np.array([[r.x, r.y] for r in path[:9]])
+        if np.isnan(myarray).any():
+            print("Nan found in Kalman")
+
         kf.em([(r.x, r.y) for r in path[:9]])
         observed_states, _ = kf.smooth([(r.x, r.y) for r in path[:9]])
 

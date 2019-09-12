@@ -5,20 +5,9 @@ import socialforce
 import argparse
 import os
 
-### Controlled Data ####
-
+### Controlled Data Generation ####
 def initialize(scenario, num_ped, sim=None):
-    if scenario == 'random':
-        return random_initialize(num_ped, sim)
-    elif scenario == 'scenario_1':
-        return scenario1_initialize(num_ped, sim)
-    elif scenario == 'scenario_2':
-        return scenario2_initialize(num_ped, sim)
-    elif 'overfit' in scenario:
-        return overfit_initialize(num_ped, sim)
-    else:
-        return scenario3_initialize(num_ped, sim)
-
+    return overfit_initialize(num_ped, sim)
 
 def overfit_initialize(num_ped, sim):
     # initialize agents' starting and goal positions
@@ -45,35 +34,6 @@ def overfit_initialize(num_ped, sim):
                 sim.addAgent((px, py_))
 
             rand_speed = random.uniform(0.8, 1.2)
-            vx = 0
-            vy = rand_speed * np.sign(gy[j] - py_)
-            speed.append((vx, vy))
-
-    trajectories = [[positions[i]] for i in range(num_ped)]
-    return trajectories, positions, goals, speed
-
-
-def scenario1_initialize(num_ped, sim):
-    # initialize agents' starting and goal positions
-    # No time varying interaction
-    x = np.linspace(-10, 10, int(np.around(num_ped/2+0.1)))
-    positions = []
-    goals = []
-    speed = []
-    for i in range(int(np.around(num_ped/2+0.1))):
-        py = [-5, 5]
-        gy = [7, -7]
-        for j in range(2):
-            px = x[i]+random.uniform(-0.5, 0.5)
-            gx = x[i]+random.uniform(-0.5, 0.5)
-            py_ = py[j] + random.uniform(-1, 1)
-            gy_ = gy[j] + random.uniform(-1, 1)
-            positions.append((px, py_))
-            goals.append((gx, gy_))
-            if sim is not None:
-                sim.addAgent((px, py_))
-
-            rand_speed = random.uniform(0.8, 1)
             vx = 0
             vy = rand_speed * np.sign(gy[j] - py_)
             speed.append((vx, vy))
@@ -191,12 +151,9 @@ def main():
         print(simulation)
 
         ##Decide the number of scenes 
-        if simulation == 'scenario_1':
-            N = 100  
-            # N = 80
-        else:
-            # N = 1500
-            N = 150
+        N = 150
+        ##Decide number of people
+        num_ped = 8
 
         count = 0
         last_frame = -5
@@ -204,15 +161,6 @@ def main():
             ## Print every 10th scene
             if (i+1) % 10 == 0:
                 print(i)
-
-            ##Decide number of people
-            if simulation != 'scenario_1':
-                num_ped = random.randint(20, 40)
-            else:
-                num_ped = 16
-
-            if simulation == 'overfit_initialize':
-                num_ped = 8
 
             ##Generate the scene
             trajectories = generate_trajectory(simulator=args.simulator, scenario=simulation,

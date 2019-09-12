@@ -170,9 +170,9 @@ def main():
     #       'output_pre/{split}/cff_10.ndjson', order_frames=True)  
     # categorize(sc, 'output_pre/{split}/cff_10.ndjson')
 
-    # write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-06.csv'),
-    #       'output_pre/{split}/cff_06.ndjson', order_frames=True)  
-    # categorize(sc, 'output_pre/{split}/cff_06.ndjson')
+    write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-06.csv'),
+          'output_pre/{split}/cff_06.ndjson', order_frames=True)  
+    categorize(sc, 'output_pre/{split}/cff_06.ndjson')
     # # lcas
     # write(lcas(sc, 'data/raw/lcas/data.csv'),
     #       'output_pre/{split}/lcas.ndjson')
@@ -186,7 +186,7 @@ def main():
     # #       'output/{split}/crowds_arxiepiskopi1.ndjson')
     # write(crowds(sc, 'data/raw/crowds/crowds_zara02.vsp'),
     #       'output_pre/{split}/crowds_zara02.ndjson')
-    categorize(sc, 'output_pre/{split}/crowds_zara02.ndjson')
+    # categorize(sc, 'output_pre/{split}/crowds_zara02.ndjson')
     # write(crowds(sc, 'data/raw/crowds/crowds_zara03.vsp'),
     #       'output/{split}/crowds_zara03.ndjson')
     # write(crowds(sc, 'data/raw/crowds/students001.vsp'),
@@ -198,6 +198,7 @@ def main():
     # # synthetic data
     # write(controlled(sc, 'data/raw/controlled/orca_traj_3_overfit_initialize.txt'),
     #       'syn_output/{split}/collision_avoidance_3.ndjson')
+    # categorize(sc, 'output_pre/{split}/collision_avoidance_3filter.ndjson')
     # write(controlled(sc, 'data/raw/controlled/social_force_traj_overfit_initialize.txt'),
     #       'syn_output/{split}/sf_collision_avoidance.ndjson')
     
