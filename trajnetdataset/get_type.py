@@ -21,7 +21,7 @@ def get_type(scene):
     inter_dist_thresh = 5
 
     ## Group
-    grp_dist_thresh = 0.8
+    grp_dist_thresh = 0.8 
     grp_std_thresh = 0.2
 
     ## Get xy-coordinates from trackRows
@@ -46,16 +46,6 @@ def get_type(scene):
         :return: Determine if interaction exists and type (optionally)
         '''
         return check_interaction(rows, pos_range, dist_thresh)
-
-    ## Type 3
-    # def group(rows, dist_thresh=2, std_thresh=0.5):
-    #     '''
-    #     return: True if primary in a group
-    #     '''     
-    #     return check_group(rows, dist_thresh, std_thresh)
-
-    ## Type 4 = not(Type 1 or Type 2 or Type 3)
-
 
     ## Category Tags
     mult_tag = []

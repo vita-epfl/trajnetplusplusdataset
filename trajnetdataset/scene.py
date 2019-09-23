@@ -5,13 +5,14 @@ from trajnettools import SceneRow
 
 
 class Scenes(object):
-    def __init__(self, fps, start_scene_id=0, chunk_size=21, chunk_stride=5, visible_chunk=None):
+    def __init__(self, fps, start_scene_id=0, chunk_size=21, chunk_stride=2, visible_chunk=None, min_length=0.2):
         self.scene_id = start_scene_id
         self.chunk_size = chunk_size
         self.chunk_stride = chunk_stride
         self.visible_chunk = visible_chunk
         self.frames = set()
         self.fps = fps
+        self.min_length = min_length
 
     @staticmethod
     def euclidean_distance_2(row1, row2):
@@ -68,8 +69,8 @@ class Scenes(object):
             .flatMapValues(lambda path: [
                 [path[ii].frame for ii in range(i, i + self.chunk_size)]
                 for i in range(0, len(path) - self.chunk_size + 1, self.chunk_stride)
-                # filter for pedestrians moving by more than 1 meter
-                if self.euclidean_distance_2(path[i], path[i+self.chunk_size-1]) > 0.2
+                # filter for pedestrians moving by more than min_length meter
+                if self.euclidean_distance_2(path[i], path[i+self.chunk_size-1]) > self.min_length
             ])
 
             # filter out scenes with large gaps in frame numbers

@@ -1,32 +1,26 @@
 import random
 import numpy as np
 import rvo2
-import socialforce
 import argparse
 import os
+import matplotlib.pyplot as plt
 
 ### Controlled Data Generation ####
-def initialize(scenario, num_ped, sim=None):
-    return overfit_initialize(num_ped, sim)
-
 def overfit_initialize(num_ped, sim):
     # initialize agents' starting and goal positions
     ## Time Varying Interaction (from left to right) + Noise 
-    x = np.linspace(-10, 10, 8)
+    x = np.linspace(-20, 20, 4)
     positions = []
     goals = []
     speed = []
-    num_ped = 8
-    for i in range(8):
+    for i in range(4):
         random_number = random.uniform(-0.3, 0.3)
-        py = [-6, 6]
-        # py = [-5, 5]
-        # py = [-7, 7]
-        gy = [7, -7]
+        py = [-10, 10]
+        gy = [10, -10]
         for j in range(2):
             px = x[i] + random_number
             gx = x[i] + random_number
-            py_ = py[j] + i * 5/9 * np.sign(j) + random.uniform(-0.5, 0.5)
+            py_ = py[j] + i * 16/9 * np.sign(j) + random.uniform(-0.5, 0.5)
             gy_ = gy[j] + random.uniform(-0.5, 0.5)
             positions.append((px, py_))
             goals.append((gx, gy_))
@@ -41,11 +35,12 @@ def overfit_initialize(num_ped, sim):
     trajectories = [[positions[i]] for i in range(num_ped)]
     return trajectories, positions, goals, speed
 
-def generate_orca_trajectory(scenario, num_ped, end_range=0.8):
-    sim = rvo2.PyRVOSimulator(1 / 2.5, 3, 10, 1.5, 2, 0.4, 2)
+def generate_orca_trajectory(num_ped, min_dist=3, react_time=1.5, end_range=1.0):
+    sim = rvo2.PyRVOSimulator(1 / 2.5, min_dist, 10, react_time, 2, 0.4, 2)
+    #1.5
 
     ##Initiliaze a scene
-    trajectories, positions, goals, speed = initialize(scenario, num_ped, sim=sim)
+    trajectories, positions, goals, speed = overfit_initialize(num_ped, sim)
     done = False
     reaching_goal_by_ped = [False] * num_ped
     count = 0
@@ -58,7 +53,10 @@ def generate_orca_trajectory(scenario, num_ped, end_range=0.8):
             if count == 0:
                 trajectories[i].pop(0)
             position = sim.getAgentPosition(i)
-            trajectories[i].append(position)
+
+            ## Append only if Goal not reached
+            if not reaching_goal_by_ped[i]:
+                trajectories[i].append(position)
 
             # check if this agent reaches the goal
             if np.linalg.norm(np.array(position) - np.array(goals[i])) < end_range:
@@ -72,36 +70,6 @@ def generate_orca_trajectory(scenario, num_ped, end_range=0.8):
                 pref_vel = velocity / speed if speed > 1 else velocity
                 sim.setAgentPrefVelocity(i, tuple(pref_vel.tolist()))
         count += 1
-        done = all(reaching_goal)
-
-    return trajectories
-
-
-def generate_sf_trajectory(scenario, num_ped, end_range=1):
-
-    ##Initiliaze a scene
-    trajectories, positions, goals, speed = initialize(scenario, num_ped)
-
-    initial_state = np.array([[positions[i][0], positions[i][1], speed[i][0], speed[i][1],
-                               goals[i][0], goals[i][1]] for i in range(num_ped)])
-    reaching_goal = [False] * num_ped
-    done = False
-    count = 0
-
-    ##Simulate a scene
-    while not done and count < 300:
-        count += 1
-        s = socialforce.Simulator(initial_state, delta_t=0.2)
-        position = np.stack(s.step().state.copy())
-        for i in range(len(initial_state)):
-            if count % 2 == 0:
-                trajectories[i].append((position[i, 0], position[i, 1]))
-            # check if this agent reaches the goal
-            if np.linalg.norm(position[i, :2] - np.array(goals[i])) < end_range:
-                reaching_goal[i] = True
-            else:
-                initial_state[i, :2] = position[i, :2]
-
         done = all(reaching_goal)
 
     return trajectories
@@ -125,33 +93,66 @@ def write_to_txt(trajectories, path, count, frame):
 
     return last_frame
 
+def viz(trajectories):
+    for i in range(len(trajectories)):
+        trajectory = np.array(trajectories[i])
+        plt.plot(trajectory[:, 0], trajectory[:, 1])
 
-def generate_trajectory(simulator, scenario, num_ped):
-
-    if simulator == 'orca':
-        return generate_orca_trajectory(scenario=scenario, num_ped=num_ped)
-    else:
-        return generate_sf_trajectory(scenario=scenario, num_ped=num_ped)
-
+    plt.xlim(-22, 22)
+    plt.show()
+    plt.close()
+    return
 
 def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--simulator', default='orca',
                         choices=('orca', 'social_force'))
-    parser.add_argument('--simulation-type', default=['overfit_initialize'],
-                        choices=('overfit', 'overfit_initialize2'))
+    parser.add_argument('--simulation_type', required=True)
+    parser.add_argument('--test', default=False)
 
     args = parser.parse_args()
 
     if not os.path.isdir('./data'):
         os.makedirs('./data')
 
-    for simulation in args.simulation_type:
-        print(simulation)
+    # # train_params = [[2, 2.5], [3, 1], [3, 2], [4, 2]]
+    # ## [3, 1] is close 
+    # ## [2, 2.5], [3, 2] is medium
+    # ## [4, 2] is far
 
+    # if args.simulation_type == 'close':
+    #     params = [[3, 1]]
+    # elif args.simulation_type == 'medium1':
+    #     params = [[2, 2.5]]
+    # elif args.simulation_type == 'medium2':
+    #     params = [[3, 2]]
+    # elif args.simulation_type == 'far':
+    #     params = [[4, 2]]
+    # else:
+    #     raise ValueError
+
+    # # test_params = [[2, 3], [3, 1.5], [4, 1.5]]
+    # ## [4, 1.5] is close 
+    # ## [2, 3] is medium
+    # ## [3, 1.5] is far
+
+    # if args.simulation_type == 'close':
+    #     params = [[4, 1.5]]
+    # elif args.simulation_type == 'medium':
+    #     params = [[2, 3]]
+    # elif args.simulation_type == 'far':
+    #     params = [[3, 1.5]]
+    # else:
+    #     raise ValueError
+
+    for min_dist, react_time in params:
+        print("min_dist, time_react:", min_dist, react_time) 
         ##Decide the number of scenes 
-        N = 150
+        if not args.test:
+            N = 10 
+        else:
+            N = 4
         ##Decide number of people
         num_ped = 8
 
@@ -163,12 +164,15 @@ def main():
                 print(i)
 
             ##Generate the scene
-            trajectories = generate_trajectory(simulator=args.simulator, scenario=simulation,
-                                               num_ped=num_ped)
-
-            ##Write the Scene to Txt
-            last_frame = write_to_txt(trajectories, 'data/raw/controlled/' + args.simulator + '_traj_'
-                                      + simulation + '.txt', count=count, frame=last_frame+5)
+            trajectories = generate_orca_trajectory(num_ped=num_ped, min_dist=min_dist, react_time=react_time)
+            # viz(trajectories)
+            # ##Write the Scene to Txt
+            if not args.test:
+                last_frame = write_to_txt(trajectories, 'data/raw/controlled/' + args.simulator + '_traj_'
+                                          + args.simulation_type + '.txt', count=count, frame=last_frame+5)
+            else:
+                last_frame = write_to_txt(trajectories, 'data/raw/controlled/test' + args.simulator + '_traj_'
+                                          + args.simulation_type + '.txt', count=count, frame=last_frame+5)
             count += num_ped
 
 
