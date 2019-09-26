@@ -209,3 +209,67 @@ def trajnet_original(line):
                     int(float(line[1])),
                     float(line[2]),
                     float(line[3]))
+
+def cff(line):
+    line = [e for e in line.split(';') if e != '']
+
+    ## Time Stamp
+    time = [t for t in line[0].split(':') if t != '']
+    
+    ## Check Line Entry Valid
+    if len(line) != 5:
+        return None
+
+    ## Check Time Entry Valid
+    if len(time) != 4:
+        return None
+
+    ## Check Location
+    if line[1] != 'PIW':
+        return None
+
+    ## Check Time Format
+    if time[0][-3:] == 'T07':
+        ped_id = int(line[4])
+        f = 0
+    elif time[0][-3:] == 'T17':
+        ped_id = 100000 + int(line[4])
+        f = 100000
+    else:
+        # "Time Format Incorrect"
+        return None
+
+    ## Extract Frame
+    f += int(time[-3])*1000 + int(time[-2])*10 + int(time[-1][0])
+
+    if f % 4 == 0:
+        return TrackRow(f,  # shift from 1-index to 0-index
+                        ped_id,
+                        float(line[2])/1000,
+                        float(line[3])/1000)
+    else:
+        return None
+
+
+def lcas(line):
+    line = [e for e in line.split(',') if e != '']
+    return TrackRow(int(float(line[0])),
+                    int(float(line[1])),
+                    float(line[2]),
+                    float(line[3]))
+
+def controlled(line):
+    line = [e for e in line.split(', ') if e != '']
+    return TrackRow(int(float(line[0])),
+                    int(float(line[1])),
+                    float(line[2]),
+                    float(line[3]))
+
+def get_trackrows(line):
+    line = json.loads(line)
+    track = line.get('track')
+    if track is not None:
+        return TrackRow(track['f'], track['p'], track['x'], track['y'], track.get('prediction_number'))
+    else:
+        return None
+                    
