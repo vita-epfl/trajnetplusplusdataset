@@ -69,7 +69,7 @@ def get_type(scene):
 
     # Interaction Types
     if mult_tag[0] == 3:
-        sub_tag = get_interaction_type(scene_xy)
+        sub_tag = get_interaction_type(scene_xy, pos_range=inter_pos_range, dist_thresh=inter_dist_thresh)
     else:
         sub_tag = []       
 
@@ -128,7 +128,6 @@ def trajectory_type(rows, path, fps, track_id=0):
 
         # Assert Test Scene length
         if test:
-            # print("Rows: ", len(scenes_test[index][0]))
             assert len(scenes_test[index][0]) >= 9, 'Scene Test not adequate length'
 
         ## Check Collision
@@ -140,8 +139,8 @@ def trajectory_type(rows, path, fps, track_id=0):
         ## Get Tag
         tag, mult_tag, sub_tag = get_type(scene)
 
-        ## Acceptance
-        accept = [0.1, 1.0, 1.0, 1.0, 1.0]
+        ## Acceptance Probability of Different Types
+        accept = [0.1, 1.0, 1.0, 1.0]
 
         if np.random.uniform() < accept[tag - 1]:
             ## Update Tags

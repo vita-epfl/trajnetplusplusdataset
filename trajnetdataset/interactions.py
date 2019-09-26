@@ -103,13 +103,13 @@ def interaction_length(interaction_matrix, length=1):
     interaction_sum = np.sum(interaction_matrix, axis=0)
     return interaction_sum >= length
 
-def lf(rows):
-    interaction_matrix = check_interaction(rows, choice='bothpos', output='matrix')
+def lf(rows, pos_range=15, dist_thresh=5):
+    interaction_matrix = check_interaction(rows, pos_range=pos_range, dist_thresh=dist_thresh, choice='bothpos', output='matrix')
     interaction_index = interaction_length(interaction_matrix, length=5)
     return np.any(interaction_index)
 
-def ca(rows):
-    interaction_matrix = check_interaction(rows, choice='bothpos',  vel_angle=180, output='matrix')
+def ca(rows, pos_range=15, dist_thresh=5):
+    interaction_matrix = check_interaction(rows, pos_range=pos_range, dist_thresh=dist_thresh, choice='bothpos',  vel_angle=180, output='matrix')
     interaction_index = interaction_length(interaction_matrix, length=1)
     return np.any(interaction_index)
 
@@ -117,11 +117,11 @@ def group(rows, dist_thresh=0.8, std_thresh=0.2):
     interaction_index = check_group(rows, dist_thresh, std_thresh)        
     return np.any(interaction_index)
 
-def get_interaction_type(rows):    
+def get_interaction_type(rows, pos_range=15, dist_thresh=5):    
     interaction_type = []
-    if lf(rows):
+    if lf(rows, pos_range, dist_thresh):
         interaction_type.append(1)
-    if ca(rows):
+    if ca(rows, pos_range, dist_thresh):
         interaction_type.append(2)
     if group(rows):
         interaction_type.append(3)

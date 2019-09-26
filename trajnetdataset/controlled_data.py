@@ -9,17 +9,17 @@ import matplotlib.pyplot as plt
 def overfit_initialize(num_ped, sim):
     # initialize agents' starting and goal positions
     ## Time Varying Interaction (from left to right) + Noise 
-    x = np.linspace(-20, 20, 4)
+    x = np.linspace(-15, 15, 4)
     positions = []
     goals = []
     speed = []
     for i in range(4):
-        random_number = random.uniform(-0.3, 0.3)
+        # random_number = random.uniform(-0.3, 0.3)
         py = [-10, 10]
         gy = [10, -10]
         for j in range(2):
-            px = x[i] + random_number
-            gx = x[i] + random_number
+            px = x[i] + np.random.normal(0, 0.3) * np.sign(j)
+            gx = x[i] + np.random.normal(0, 0.1) * np.sign(j)
             py_ = py[j] + i * 16/9 * np.sign(j) + random.uniform(-0.5, 0.5)
             gy_ = gy[j] + random.uniform(-0.5, 0.5)
             positions.append((px, py_))
@@ -98,7 +98,7 @@ def viz(trajectories):
         trajectory = np.array(trajectories[i])
         plt.plot(trajectory[:, 0], trajectory[:, 1])
 
-    plt.xlim(-22, 22)
+    plt.xlim(-16, 16)
     plt.show()
     plt.close()
     return
@@ -120,43 +120,28 @@ def main():
     # ## [3, 1] is close 
     # ## [2, 2.5], [3, 2] is medium
     # ## [4, 2] is far
-
-    # if args.simulation_type == 'close':
-    #     params = [[3, 1]]
-    # elif args.simulation_type == 'medium1':
-    #     params = [[2, 2.5]]
-    # elif args.simulation_type == 'medium2':
-    #     params = [[3, 2]]
-    # elif args.simulation_type == 'far':
-    #     params = [[4, 2]]
-    # else:
-    #     raise ValueError
-
-    # # test_params = [[2, 3], [3, 1.5], [4, 1.5]]
-    # ## [4, 1.5] is close 
-    # ## [2, 3] is medium
-    # ## [3, 1.5] is far
-
-    # if args.simulation_type == 'close':
-    #     params = [[4, 1.5]]
-    # elif args.simulation_type == 'medium':
-    #     params = [[2, 3]]
-    # elif args.simulation_type == 'far':
-    #     params = [[3, 1.5]]
-    # else:
-    #     raise ValueError
+    if args.simulation_type == 'close':
+        params = [[3, 1]]
+    elif args.simulation_type == 'medium1':
+        params = [[2, 2.5]]
+    elif args.simulation_type == 'medium2':
+        params = [[3, 2]]
+    elif args.simulation_type == 'far':
+        params = [[4, 2]]
+    else:
+        raise ValueError
 
     for min_dist, react_time in params:
         print("min_dist, time_react:", min_dist, react_time) 
         ##Decide the number of scenes 
         if not args.test:
-            N = 10 
+            N = 100 
         else:
-            N = 4
+            N = 10
         ##Decide number of people
         num_ped = 8
 
-        count = 0
+        count = 0   
         last_frame = -5
         for i in range(N):
             ## Print every 10th scene
@@ -171,7 +156,7 @@ def main():
                 last_frame = write_to_txt(trajectories, 'data/raw/controlled/' + args.simulator + '_traj_'
                                           + args.simulation_type + '.txt', count=count, frame=last_frame+5)
             else:
-                last_frame = write_to_txt(trajectories, 'data/raw/controlled/test' + args.simulator + '_traj_'
+                last_frame = write_to_txt(trajectories, 'data/raw/controlled/test_' + args.simulator + '_traj_'
                                           + args.simulation_type + '.txt', count=count, frame=last_frame+5)
             count += num_ped
 

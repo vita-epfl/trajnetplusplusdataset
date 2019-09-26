@@ -258,17 +258,6 @@ def lcas(line):
                     float(line[2]),
                     float(line[3]))
 
-def honda(line):
-    line = [e for e in line.split(' ') if e != '']
-    # print(line)
-    if int(line[0]) % 12 != 0:
-        return None
-
-    return TrackRow(int(float(line[0])),
-                    int(float(line[1])),
-                    float(line[2])/100,
-                    float(line[3])/100)
-
 def controlled(line):
     line = [e for e in line.split(', ') if e != '']
     return TrackRow(int(float(line[0])),

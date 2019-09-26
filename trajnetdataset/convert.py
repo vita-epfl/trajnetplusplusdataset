@@ -8,9 +8,8 @@ import trajnettools
 
 from . import readers
 from .scene import Scenes
-from .get_type import trajectory_type as t_type
-from .leader_follower import lf_filter
-from .collision_avoidance import ca_filter
+from .get_type import trajectory_type
+
 
 def biwi(sc, input_file):
     print('processing ' + input_file)
@@ -86,14 +85,6 @@ def lcas(sc, input_file):
             .map(readers.lcas)
             .cache())
 
-def honda(sc, input_file):
-    print('processing ' + input_file)
-    return (sc
-            .textFile(input_file)
-            .map(readers.honda)
-            .filter(lambda r: r is not None)
-            .cache())
-
 def controlled(sc, input_file):
     print('processing ' + input_file)
     return (sc
@@ -111,7 +102,7 @@ def get_trackrows(sc, input_file):
 
 def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2, fps=2.5, order_frames=False):
     print(" Entering Writing ")
-    ## To handle two different time stamps of cff
+    ## To handle two different time stamps 7:00 and 17:00 of cff
     if order_frames:
         frames = sorted(set(input_rows.map(lambda r: r.frame).toLocalIterator()), key=lambda frame: frame % 100000)
     else:
@@ -122,7 +113,6 @@ def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2, fps=2.5
     train_frames = set(frames[:train_split_index])
     val_frames = set(frames[train_split_index:val_split_index])
     test_frames = set(frames[val_split_index:])
-    print("Val Split Index: ", val_split_index)
 
     # train dataset
     train_rows = input_rows.filter(lambda r: r.frame in train_frames)
@@ -147,13 +137,7 @@ def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2, fps=2.5
 def categorize(sc, input_file, fps=2.5, train=False, test=False, traj_type=None):
     print(" Entering Trajectory Type ")
 
-    if traj_type == 'lf':
-        trajectory_type = lf_filter
-    elif traj_type == 'ca':
-        trajectory_type = ca_filter
-    else: 
-        trajectory_type = t_type
-
+    # Decide which folders to categorize #
     if train:
         #Train
         print("Only train")
@@ -183,48 +167,55 @@ def categorize(sc, input_file, fps=2.5, train=False, test=False, traj_type=None)
 def main():
     sc = pysparkling.Context()
 
-    # # originally train TRAJNET
+    # Example Conversions
+    # # real datasets  
     write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
-          'output_pre/{split}/biwi_hotel.ndjson', train_fraction=1.0, val_fraction=0)
-    categorize(sc, 'output_pre/{split}/biwi_hotel.ndjson', train=True)
+          'output_pre/{split}/biwi_hotel.ndjson')
+    categorize(sc, 'output_pre/{split}/biwi_hotel.ndjson')
     write(crowds(sc, 'data/raw/crowds/crowds_zara02.vsp'),
-          'output_pre/{split}/crowds_zara02.ndjson', train_fraction=1.0, val_fraction=0)
-    categorize(sc, 'output_pre/{split}/crowds_zara02.ndjson', train=True)
+          'output_pre/{split}/crowds_zara02.ndjson')
+    categorize(sc, 'output_pre/{split}/crowds_zara02.ndjson')
     write(crowds(sc, 'data/raw/crowds/crowds_zara03.vsp'),
-          'output_pre/{split}/crowds_zara03.ndjson', train_fraction=1.0, val_fraction=0)
-    categorize(sc, 'output_pre/{split}/crowds_zara03.ndjson', train=True)
+          'output_pre/{split}/crowds_zara03.ndjson')
+    categorize(sc, 'output_pre/{split}/crowds_zara03.ndjson')
     write(crowds(sc, 'data/raw/crowds/students001.vsp'),
-          'output_pre/{split}/crowds_students001.ndjson', train_fraction=1.0, val_fraction=0)
-    categorize(sc, 'output_pre/{split}/crowds_students001.ndjson', train=True)
+          'output_pre/{split}/crowds_students001.ndjson')
+    categorize(sc, 'output_pre/{split}/crowds_students001.ndjson')
     write(crowds(sc, 'data/raw/crowds/students003.vsp'),
-          'output_pre/{split}/crowds_students003.ndjson', train_fraction=1.0, val_fraction=0)
-    categorize(sc, 'output_pre/{split}/crowds_students003.ndjson', train=True)
+          'output_pre/{split}/crowds_students003.ndjson')
+    categorize(sc, 'output_pre/{split}/crowds_students003.ndjson')
+
+    # # new datasets
     write(wildtrack(sc, 'data/raw/wildtrack/Wildtrack_dataset/annotations_positions/*.json'),
-          'output_pre/{split}/wildtrack.ndjson',fps = 2, train_fraction=1.0, val_fraction=0)
-    categorize(sc, 'output_pre/{split}/wildtrack.ndjson',fps = 2, train=True)
+          'output_pre/{split}/wildtrack.ndjson',fps = 2)
+    categorize(sc, 'output_pre/{split}/wildtrack.ndjson',fps = 2)
     write(lcas(sc, 'data/raw/lcas/test/data.csv'),
-          'output_pre/{split}/lcas.ndjson', train_fraction=1.0, val_fraction=0)
-    categorize(sc, 'output_pre/{split}/lcas.ndjson', train=True)
-
-    # # originally test TRAJNET
-    # write(biwi(sc, 'data/raw/biwi/seq_eth/obsmat.txt'),
-    #            'output_pre/{split}/biwi_eth.ndjson', train_fraction=0.0, val_fraction=0.0)
-    # categorize(sc, 'output_pre/{split}/biwi_eth.ndjson', test=True)  
-    # write(crowds(sc, 'data/raw/crowds/crowds_zara01.vsp'),
-    #                     'output_pre/{split}/crowds_zara01.ndjson', train_fraction=0.0, val_fraction=0.0)
-    # categorize(sc, 'output_pre/{split}/crowds_zara01.ndjson', test=True)  
-    # write(crowds(sc, 'data/raw/crowds/uni_examples.vsp'),
-    #                     'output_pre/{split}/crowds_uni_examples.ndjson', train_fraction=0.0, val_fraction=0.0)
-    # categorize(sc, 'output_pre/{split}/crowds_uni_examples.ndjson', test=True)  
-
-    # LF
-    ## Test
+          'output_pre/{split}/lcas.ndjson')
+    categorize(sc, 'output_pre/{split}/lcas.ndjson')
+    
+    # # CFF: More trajectories
+    # # Chunk_stride > 20 preferred. 
     # write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-10.csv'),
-    #       'output_pre/{split}/cff_10.ndjson', train_fraction=0.0, val_fraction=0.0)  
-    # categorize(sc, 'output_pre/{split}/cff_10.ndjson', test=True, traj_type='lf')
+    #       'output_pre/{split}/cff_10.ndjson', order_frames=True)  
+    # categorize(sc, 'output_pre/{split}/cff_10.ndjson')
+    # write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-06.csv'),
+    #       'output_pre/{split}/cff_06.ndjson', order_frames=True)  
+    # categorize(sc, 'output_pre/{split}/cff_06.ndjson')
+
+
+    # Eg. of 'Train Only' categorization
+    # write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
+    #       'output_pre/{split}/biwi_hotel.ndjson', train_fraction=1.0, val_fraction=0)
+    # categorize(sc, 'output_pre/{split}/biwi_hotel.ndjson', train=True)
+
+    # Eg. of 'Test Only' categorization
+    # write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
+    #       'output_pre/{split}/biwi_hotel.ndjson', train_fraction=0.0, val_fraction=0)
+    # categorize(sc, 'output_pre/{split}/biwi_hotel.ndjson', test=True)
 
     # CA 
-    ## Train
+    # Generate Trajectories First. # 
+    # # Train
     # write(controlled(sc, 'data/raw/controlled/orca_traj_close.txt'),
     #       'output_pre/{split}/controlled_close.ndjson', train_fraction=1.0, val_fraction=0)  
     # categorize(sc, 'output_pre/{split}/controlled_close.ndjson', train=True, traj_type='ca')
@@ -237,53 +228,6 @@ def main():
     # write(controlled(sc, 'data/raw/controlled/orca_traj_far.txt'),
     #       'output_pre/{split}/controlled_far.ndjson', train_fraction=1.0, val_fraction=0)            
     # categorize(sc, 'output_pre/{split}/controlled_far.ndjson', train=True , traj_type='ca')
-
-    # CA 
-    ## Test
-    # write(controlled(sc, 'data/raw/controlled/testorca_traj_close.txt'),
-    #       'output_pre/{split}/controlled_close.ndjson', train_fraction=0.0, val_fraction=0)  
-    # categorize(sc, 'output_pre/{split}/controlled_close.ndjson', test=True, traj_type='ca')
-    # write(controlled(sc, 'data/raw/controlled/testorca_traj_medium.txt'),
-    #       'output_pre/{split}/controlled_medium.ndjson', train_fraction=0.0, val_fraction=0)  
-    # categorize(sc, 'output_pre/{split}/controlled_medium.ndjson', test=True , traj_type='ca')
-    # write(controlled(sc, 'data/raw/controlled/testorca_traj_far.txt'),
-    #       'output_pre/{split}/controlled_far.ndjson', train_fraction=0.0, val_fraction=0)            
-    # categorize(sc, 'output_pre/{split}/controlled_far.ndjson', test=True , traj_type='ca')
-
-
-    # # new datasets
-    # # cff
-    # write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-10.csv'),
-    #       'output_pre/{split}/cff_10.ndjson', order_frames=True)  
-    # categorize(sc, 'output_pre/{split}/cff_10.ndjson')
-    # write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-06.csv'),
-    #       'output_pre/{split}/cff_06.ndjson', order_frames=True)  
-    # categorize(sc, 'output_pre/{split}/cff_06.ndjson')
-    # # lcas
-    # write(lcas(sc, 'data/raw/lcas/data.csv'),
-    #       'output_pre/{split}/lcas.ndjson')
-    # categorize(sc, 'output_pre/{split}/lcas.ndjson')
-    # honda
-    # write(honda(sc, 'data/raw/honda/honda.txt'),
-    #       'output_pre/{split}/honda.ndjson')
-    # categorize(sc, 'output_pre/{split}/honda.ndjson')
-
-    # # unused datasets
-    # write_without_split(edinburgh(sc, 'data/raw/edinburgh/tracks.*.zip'),
-    #                     'output/unused/edinburgh.ndjson')
-    # write_without_split(mot(sc, 'data/raw/mot/pets2009_s2l1.txt'),
-    #                     'output/unused/mot_pets2009_s2l1.ndjson')
-    # write(dukemtmc(sc, 'data/raw/duke/trainval.mat'),
-    #       'output/{split}/dukemtmc.ndjson')
-    # write(syi(sc, 'data/raw/syi/0?????.txt'),
-    #       'output/{split}/syi.ndjson')
-
-    # # compress the outputs
-    # subprocess.check_output(['tar', '-czf', 'output/train.tar.gz', 'output/train'])
-    # subprocess.check_output(['tar', '-czf', 'output/val.tar.gz', 'output/val'])
-    # subprocess.check_output(['tar', '-czf', 'output/test.tar.gz', 'output/test'])
-    # subprocess.check_output(['tar', '-czf', 'output/test_private.tar.gz', 'output/test_private'])
-    # subprocess.check_output(['tar', '-czf', 'output/unused.tar.gz', 'output/unused'])
 
 
 if __name__ == '__main__':
