@@ -35,44 +35,35 @@ Extract:
 
     # crowds
     mkdir -p data/raw/crowds
-    cp data/crowds_homography/*.json data/raw/crowds # Put homography files in the right folder
     unrar e data/data_arxiepiskopi.rar data/raw/crowds
     unrar e data/data_university_students.rar data/raw/crowds
     unrar e data/data_zara.rar data/raw/crowds
 
-    # PETS09 S2L1 ground truth -- not used because people behavior is not normal
-    mkdir -p data/raw/mot
-    tar -xzf data/3DMOT2015Labels.zip -C data/
-    cp data/3DMOT2015Labels/train/PETS09-S2L1/gt/gt.txt data/raw/mot/pets2009_s2l1.txt
-    
     # cff
     mkdir -p data/raw/cff_dataset
-    tar -xzf data/cff_dataset.zip -C data/raw/
+    unzip data/cff_dataset.zip -d data/raw/
     rm -r data/raw/__MACOSX
-    
-    # original Trajnet files
-    mkdir -p data/trajnet_original
-    tar -xzf data/Train.zip -C data/trajnet_original
-    mv data/trajnet_original/train/* data/trajnet_original
-    rm -r data/trajnet_original/train
-    rm -r data/trajnet_original/__MACOSX
 
-    # Edinburgh Informatics Forum tracker -- not used because tracks are not good enough
-    mkdir -p data/raw/edinburgh
-    wget -i edinburgh_informatics_forum_urls.txt -P data/raw/edinburgh/
+    # Wildtrack: https://www.epfl.ch/labs/cvlab/data/data-wildtrack/
+    mkdir -p data/raw/wildtrack
+    unzip data/Wildtrack_dataset_full.zip -d data/raw/wildtrack
+
+    # L-CAS: https://drive.google.com/drive/folders/1CPV9XeJsZzvtTxPQ9u1ppLGs_29e-XdQ
+    mkdir -p data/raw/lcas
+    cp data/lcas_pedestrian_dataset/minerva/train/data.csv data/raw/lcas
 
     # pedestrian walking dataset
     mkdir -p data/raw/syi
     unrar e data/cvpr2015_pedestrianWalkingPathDataset.rar data/raw/syi
 
-    # DukeMTMC - camera 5
-    mkdir -p data/raw/duke
-    wget http://vision.cs.duke.edu/DukeMTMC/data/ground_truth/trainval.mat -P data/raw/duke
+    PETS09 S2L1 ground truth -- not used because people behavior is not normal
+    mkdir -p data/raw/mot
+    unzip data/3DMOT2015Labels.zip -d data/
+    cp data/3DMOT2015Labels/train/PETS09-S2L1/gt/gt.txt data/raw/mot/pets2009_s2l1.txt
 
-    # https://cvlab.epfl.ch/data/wildtrack
-    mkdir -p data/raw/wildtrack
-    tar -xzf data/Wildtrack_dataset_full.zip -C data/raw/wildtrack
-
+    # Edinburgh Informatics Forum tracker -- not used because tracks are not good enough
+    mkdir -p data/raw/edinburgh
+    wget -i edinburgh_informatics_forum_urls.txt -P data/raw/edinburgh/
 
 Run
 ---
@@ -91,9 +82,9 @@ Difference in generated data
 * partial tracks are now included (for correct occupancy maps)
 * pedestrians that appear in multiple chunks had the same id before (might be a problem for some input readers)
 * explicit index of scenes with annotation of the primary pedestrian
+
 # * the primary pedestrian has to move by more than 1 meter
 * at one point, the primary pedestrian has to be <3m away from another pedestrian
-
 
 Citations
 ---------
