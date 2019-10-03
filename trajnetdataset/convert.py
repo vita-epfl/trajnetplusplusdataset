@@ -134,7 +134,7 @@ def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2, fps=2.5
     private_test_scenes = Scenes(start_scene_id=val_scenes.scene_id, chunk_size=21, fps=fps)
     private_test_scenes.rows_to_file(test_rows, private_test_output)
 
-def categorize(sc, input_file, fps=2.5, train=False, test=False, traj_type=None):
+def categorize(sc, input_file, fps=2.5, train=False, test=False):
     print(" Entering Trajectory Type ")
 
     # Decide which folders to categorize #
@@ -218,16 +218,16 @@ def main():
     # # Train
     # write(controlled(sc, 'data/raw/controlled/orca_traj_close.txt'),
     #       'output_pre/{split}/controlled_close.ndjson', train_fraction=1.0, val_fraction=0)  
-    # categorize(sc, 'output_pre/{split}/controlled_close.ndjson', train=True, traj_type='ca')
+    # categorize(sc, 'output_pre/{split}/controlled_close.ndjson', train=True)
     # write(controlled(sc, 'data/raw/controlled/orca_traj_medium1.txt'),
     #       'output_pre/{split}/controlled_medium1.ndjson', train_fraction=1.0, val_fraction=0)  
-    # categorize(sc, 'output_pre/{split}/controlled_medium1.ndjson', train=True , traj_type='ca')
+    # categorize(sc, 'output_pre/{split}/controlled_medium1.ndjson', train=True)
     # write(controlled(sc, 'data/raw/controlled/orca_traj_medium2.txt'),
     #       'output_pre/{split}/controlled_medium2.ndjson', train_fraction=1.0, val_fraction=0) 
-    # categorize(sc, 'output_pre/{split}/controlled_medium2.ndjson', train=True , traj_type='ca')
+    # categorize(sc, 'output_pre/{split}/controlled_medium2.ndjson', train=True)
     # write(controlled(sc, 'data/raw/controlled/orca_traj_far.txt'),
     #       'output_pre/{split}/controlled_far.ndjson', train_fraction=1.0, val_fraction=0)            
-    # categorize(sc, 'output_pre/{split}/controlled_far.ndjson', train=True , traj_type='ca')
+    # categorize(sc, 'output_pre/{split}/controlled_far.ndjson', train=True)
 
 
 if __name__ == '__main__':
