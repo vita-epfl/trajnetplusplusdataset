@@ -1,10 +1,7 @@
 """Create Trajnet data from original datasets."""
 
-import subprocess
-
 import pysparkling
 import scipy.io
-import trajnettools
 
 from . import readers
 from .scene import Scenes
@@ -101,10 +98,13 @@ def get_trackrows(sc, input_file):
             .cache())
 
 def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2, fps=2.5, order_frames=False):
+    """ Write Valid Scenes without categorization """
+
     print(" Entering Writing ")
     ## To handle two different time stamps 7:00 and 17:00 of cff
     if order_frames:
-        frames = sorted(set(input_rows.map(lambda r: r.frame).toLocalIterator()), key=lambda frame: frame % 100000)
+        frames = sorted(set(input_rows.map(lambda r: r.frame).toLocalIterator()),
+                        key=lambda frame: frame % 100000)
     else:
         frames = sorted(set(input_rows.map(lambda r: r.frame).toLocalIterator()))
     # split
@@ -127,7 +127,8 @@ def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2, fps=2.5
     # public test dataset
     test_rows = input_rows.filter(lambda r: r.frame in test_frames)
     test_output = output_file.format(split='test')
-    test_scenes = Scenes(start_scene_id=val_scenes.scene_id, chunk_size=21, visible_chunk=9, fps=fps) # !!! Chunk Stride
+    test_scenes = Scenes(start_scene_id=val_scenes.scene_id,
+                         chunk_size=21, visible_chunk=9, fps=fps) # !!! Chunk Stride
     test_scenes.rows_to_file(test_rows, test_output)
     # private test dataset
     private_test_output = output_file.format(split='test_private')
@@ -135,40 +136,47 @@ def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2, fps=2.5
     private_test_scenes.rows_to_file(test_rows, private_test_output)
 
 def categorize(sc, input_file, fps=2.5, train=False, test=False):
-    print(" Entering Trajectory Type ")
+    """ Categorize the Scenes """
+
+    print(" Entering Categorizing ")
 
     # Decide which folders to categorize #
     if train:
         #Train
         print("Only train")
-        train_rows = get_trackrows(sc, input_file.replace('split', '').format('train'))    
-        train_id  = trajectory_type(train_rows, input_file.replace('split', '').format('train'), fps=fps, track_id=0)
+        train_rows = get_trackrows(sc, input_file.replace('split', '').format('train'))
+        train_id = trajectory_type(train_rows, input_file.replace('split', '').format('train'),
+                                   fps=fps, track_id=0)
 
     elif test:
         #Test
         print("Only test")
-        test_rows = get_trackrows(sc, input_file.replace('split', '').format('test_private'))    
-        test_id  = trajectory_type(test_rows, input_file.replace('split', '').format('test_private'), fps=fps, track_id=0)
+        test_rows = get_trackrows(sc, input_file.replace('split', '').format('test_private'))
+        _ = trajectory_type(test_rows, input_file.replace('split', '').format('test_private'),
+                            fps=fps, track_id=0)
 
-    else: 
+    else:
         print("All Three")
         #Train
         train_rows = get_trackrows(sc, input_file.replace('split', '').format('train'))
-        train_id = trajectory_type(train_rows, input_file.replace('split', '').format('train'), fps=fps, track_id=0)
+        train_id = trajectory_type(train_rows, input_file.replace('split', '').format('train'),
+                                   fps=fps, track_id=0)
 
         #Val
         val_rows = get_trackrows(sc, input_file.replace('split', '').format('val'))
-        val_id   = trajectory_type(val_rows, input_file.replace('split', '').format('val'), fps=fps, track_id=train_id)
+        val_id = trajectory_type(val_rows, input_file.replace('split', '').format('val'),
+                                 fps=fps, track_id=train_id)
 
         #Test
-        test_rows = get_trackrows(sc, input_file.replace('split', '').format('test_private'))    
-        test_id  = trajectory_type(test_rows, input_file.replace('split', '').format('test_private'), fps=fps, track_id=val_id)
+        test_rows = get_trackrows(sc, input_file.replace('split', '').format('test_private'))
+        _ = trajectory_type(test_rows, input_file.replace('split', '').format('test_private'),
+                            fps=fps, track_id=val_id)
 
 def main():
     sc = pysparkling.Context()
 
     # Example Conversions
-    # # real datasets  
+    # # real datasets
     write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
           'output_pre/{split}/biwi_hotel.ndjson')
     categorize(sc, 'output_pre/{split}/biwi_hotel.ndjson')
@@ -187,19 +195,19 @@ def main():
 
     # # new datasets
     write(wildtrack(sc, 'data/raw/wildtrack/Wildtrack_dataset/annotations_positions/*.json'),
-          'output_pre/{split}/wildtrack.ndjson',fps = 2)
-    categorize(sc, 'output_pre/{split}/wildtrack.ndjson',fps = 2)
+          'output_pre/{split}/wildtrack.ndjson', fps=2)
+    categorize(sc, 'output_pre/{split}/wildtrack.ndjson', fps=2)
     write(lcas(sc, 'data/raw/lcas/test/data.csv'),
           'output_pre/{split}/lcas.ndjson')
     categorize(sc, 'output_pre/{split}/lcas.ndjson')
-    
+
     # # CFF: More trajectories
-    # # Chunk_stride > 20 preferred. 
+    # # Chunk_stride > 20 preferred.
     # write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-10.csv'),
-    #       'output_pre/{split}/cff_10.ndjson', order_frames=True)  
+    #       'output_pre/{split}/cff_10.ndjson', order_frames=True)
     # categorize(sc, 'output_pre/{split}/cff_10.ndjson')
     # write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-06.csv'),
-    #       'output_pre/{split}/cff_06.ndjson', order_frames=True)  
+    #       'output_pre/{split}/cff_06.ndjson', order_frames=True)
     # categorize(sc, 'output_pre/{split}/cff_06.ndjson')
 
 
@@ -213,20 +221,20 @@ def main():
     #       'output_pre/{split}/biwi_hotel.ndjson', train_fraction=0.0, val_fraction=0)
     # categorize(sc, 'output_pre/{split}/biwi_hotel.ndjson', test=True)
 
-    # CA 
-    # Generate Trajectories First. # 
+    # CA
+    # Generate Trajectories First. #
     # # Train
     # write(controlled(sc, 'data/raw/controlled/orca_traj_close.txt'),
-    #       'output_pre/{split}/controlled_close.ndjson', train_fraction=1.0, val_fraction=0)  
+    #       'output_pre/{split}/controlled_close.ndjson', train_fraction=1.0, val_fraction=0)
     # categorize(sc, 'output_pre/{split}/controlled_close.ndjson', train=True)
     # write(controlled(sc, 'data/raw/controlled/orca_traj_medium1.txt'),
-    #       'output_pre/{split}/controlled_medium1.ndjson', train_fraction=1.0, val_fraction=0)  
+    #       'output_pre/{split}/controlled_medium1.ndjson', train_fraction=1.0, val_fraction=0)
     # categorize(sc, 'output_pre/{split}/controlled_medium1.ndjson', train=True)
     # write(controlled(sc, 'data/raw/controlled/orca_traj_medium2.txt'),
-    #       'output_pre/{split}/controlled_medium2.ndjson', train_fraction=1.0, val_fraction=0) 
+    #       'output_pre/{split}/controlled_medium2.ndjson', train_fraction=1.0, val_fraction=0)
     # categorize(sc, 'output_pre/{split}/controlled_medium2.ndjson', train=True)
     # write(controlled(sc, 'data/raw/controlled/orca_traj_far.txt'),
-    #       'output_pre/{split}/controlled_far.ndjson', train_fraction=1.0, val_fraction=0)            
+    #       'output_pre/{split}/controlled_far.ndjson', train_fraction=1.0, val_fraction=0)
     # categorize(sc, 'output_pre/{split}/controlled_far.ndjson', train=True)
 
 

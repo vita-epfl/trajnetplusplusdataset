@@ -1,3 +1,5 @@
+""" Preparng Scenes for TrajNet """
+
 from collections import defaultdict
 
 import trajnettools

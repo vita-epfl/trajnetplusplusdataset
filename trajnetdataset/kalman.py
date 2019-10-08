@@ -1,3 +1,5 @@
+""" Kalman filter Prediction """
+
 import numpy as np
 import pykalman
 import trajnettools
@@ -9,7 +11,7 @@ def predict(paths, predict_all=False):
     ## Single Prediction
     if not predict_all:
         paths = paths[0:1]
-    
+
     for i, path in enumerate(paths):
         path = paths[i]
         initial_state_mean = [path[0].x, 0, path[0].y, 0]
@@ -53,9 +55,9 @@ def predict(paths, predict_all=False):
         predictions /= 5.0
         if i == 0:
             primary_track = [trajnettools.TrackRow(first_frame + j * frame_diff, ped_id, x, y)
-            for j, (x, y) in enumerate(predictions[1:])]
+                             for j, (x, y) in enumerate(predictions[1:])]
         else:
             neighbours_tracks.append([trajnettools.TrackRow(first_frame + j * frame_diff, ped_id, x, y)
-            for j, (x, y) in enumerate(predictions[1:])])
+                                      for j, (x, y) in enumerate(predictions[1:])])
     multimodal_outputs[0] = primary_track, neighbours_tracks
     return multimodal_outputs

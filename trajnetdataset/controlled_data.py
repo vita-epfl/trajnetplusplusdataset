@@ -1,14 +1,18 @@
+""" Generating Controlled data for pretraining collision avoidance """
+
 import random
-import numpy as np
-import rvo2
 import argparse
 import os
+
+import numpy as np
 import matplotlib.pyplot as plt
 
-### Controlled Data Generation ####
+import rvo2
+
 def overfit_initialize(num_ped, sim):
+    """ Scenario initialization """
+
     # initialize agents' starting and goal positions
-    ## Time Varying Interaction (from left to right) + Noise 
     x = np.linspace(-15, 15, 4)
     positions = []
     goals = []
@@ -36,11 +40,13 @@ def overfit_initialize(num_ped, sim):
     return trajectories, positions, goals, speed
 
 def generate_orca_trajectory(num_ped, min_dist=3, react_time=1.5, end_range=1.0):
+    """ Simulating Scenario using ORCA """
+
     sim = rvo2.PyRVOSimulator(1 / 2.5, min_dist, 10, react_time, 2, 0.4, 2)
     #1.5
 
     ##Initiliaze a scene
-    trajectories, positions, goals, speed = overfit_initialize(num_ped, sim)
+    trajectories, _, goals, speed = overfit_initialize(num_ped, sim)
     done = False
     reaching_goal_by_ped = [False] * num_ped
     count = 0
@@ -74,16 +80,18 @@ def generate_orca_trajectory(num_ped, min_dist=3, react_time=1.5, end_range=1.0)
 
     return trajectories
 
-### Write Trajectories to the text file
 def write_to_txt(trajectories, path, count, frame):
+    """ Write Trajectories to the text file """
+
     last_frame = 0
     with open(path, 'a') as fo:
         track_data = []
-        for i in range(len(trajectories)):
-            for t in range(len(trajectories[i])):
+        for i, _ in enumerate(trajectories):
+            for t, _ in enumerate(trajectories[i]):
 
                 track_data.append('{}, {}, {}, {}'.format(t+frame, count+i,
-                                               trajectories[i][t][0], trajectories[i][t][1]))
+                                                          trajectories[i][t][0],
+                                                          trajectories[i][t][1]))
                 if t == len(trajectories[i])-1 and t+frame > last_frame:
                     last_frame = t+frame
 
@@ -94,17 +102,16 @@ def write_to_txt(trajectories, path, count, frame):
     return last_frame
 
 def viz(trajectories):
-    for i in range(len(trajectories)):
+    """ Visualize Trajectories """
+    for i, _ in enumerate(trajectories):
         trajectory = np.array(trajectories[i])
         plt.plot(trajectory[:, 0], trajectory[:, 1])
 
     plt.xlim(-16, 16)
     plt.show()
     plt.close()
-    return
 
 def main():
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--simulator', default='orca',
                         choices=('orca', 'social_force'))
@@ -117,49 +124,51 @@ def main():
         os.makedirs('./data')
 
     # # train_params = [[2, 2.5], [3, 1], [3, 2], [4, 2]]
-    # ## [3, 1] is close 
+    # ## [3, 1] is close
     # ## [2, 2.5], [3, 2] is medium
     # ## [4, 2] is far
-    if args.simulation_type == 'close':
-        params = [[3, 1]]
-    elif args.simulation_type == 'medium1':
-        params = [[2, 2.5]]
-    elif args.simulation_type == 'medium2':
-        params = [[3, 2]]
-    elif args.simulation_type == 'far':
-        params = [[4, 2]]
-    else:
-        raise ValueError
+    dict_params = {}
+    dict_params['close'] = [[3, 1]]
+    dict_params['medium1'] = [[2, 2.5]]
+    dict_params['medium2'] = [[3, 2]]
+    dict_params['far'] = [[4, 2]]
+
+    params = dict_params[args.simulation_type]
 
     for min_dist, react_time in params:
-        print("min_dist, time_react:", min_dist, react_time) 
-        ##Decide the number of scenes 
+        print("min_dist, time_react:", min_dist, react_time)
+        ##Decide the number of scenes
         if not args.test:
-            N = 100 
+            number_traj = 100
         else:
-            N = 10
+            number_traj = 10
         ##Decide number of people
         num_ped = 8
 
-        count = 0   
+        count = 0
         last_frame = -5
-        for i in range(N):
+        for i in range(number_traj):
             ## Print every 10th scene
             if (i+1) % 10 == 0:
                 print(i)
 
             ##Generate the scene
-            trajectories = generate_orca_trajectory(num_ped=num_ped, min_dist=min_dist, react_time=react_time)
+            trajectories = generate_orca_trajectory(num_ped=num_ped,
+                                                    min_dist=min_dist,
+                                                    react_time=react_time)
             # viz(trajectories)
             # ##Write the Scene to Txt
             if not args.test:
-                last_frame = write_to_txt(trajectories, 'data/raw/controlled/' + args.simulator + '_traj_'
-                                          + args.simulation_type + '.txt', count=count, frame=last_frame+5)
+                last_frame = write_to_txt(trajectories, 'data/raw/controlled/'
+                                          + args.simulator + '_traj_'
+                                          + args.simulation_type + '.txt',
+                                          count=count, frame=last_frame+5)
             else:
-                last_frame = write_to_txt(trajectories, 'data/raw/controlled/test_' + args.simulator + '_traj_'
-                                          + args.simulation_type + '.txt', count=count, frame=last_frame+5)
+                last_frame = write_to_txt(trajectories, 'data/raw/controlled/test_'
+                                          + args.simulator + '_traj_'
+                                          + args.simulation_type + '.txt',
+                                          count=count, frame=last_frame+5)
             count += num_ped
-
 
 if __name__ == '__main__':
     main()

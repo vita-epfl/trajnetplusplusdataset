@@ -1,3 +1,5 @@
+""" Get Stats of Trajectory Categories """
+
 import argparse
 import json
 
@@ -24,12 +26,12 @@ def main():
                     s_tag = scene_tag[1]
                     tags[m_tag].append(scene_id)
                     for s in s_tag:
-                        sub_tags[s].append(scene_id) 
-     
+                        sub_tags[s].append(scene_id)
+
         print("Main Tags")
-        print("Type 1: ", len(tags[1]), "Type 2: ",  len(tags[2]), "Type 3: ", len(tags[3]), "Type 4: ", len(tags[4]))
+        print("Type 1: ", len(tags[1]), "Type 2: ", len(tags[2]), "Type 3: ", len(tags[3]), "Type 4: ", len(tags[4]))
         print("Sub Tags")
-        print("LF: ", len(sub_tags[1]), "CA: ",  len(sub_tags[2]), "Group: ", len(sub_tags[3]), "Others: ", len(sub_tags[4]))
+        print("LF: ", len(sub_tags[1]), "CA: ", len(sub_tags[2]), "Group: ", len(sub_tags[3]), "Others: ", len(sub_tags[4]))
 
 if __name__ == '__main__':
     main()

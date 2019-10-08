@@ -1,3 +1,5 @@
+""" Read Raw files as TrackRows """
+
 import json
 import os
 import xml.etree.ElementTree
@@ -215,7 +217,7 @@ def cff(line):
 
     ## Time Stamp
     time = [t for t in line[0].split(':') if t != '']
-    
+
     ## Check Line Entry Valid
     if len(line) != 5:
         return None
@@ -247,8 +249,7 @@ def cff(line):
                         ped_id,
                         float(line[2])/1000,
                         float(line[3])/1000)
-    else:
-        return None
+    return None
 
 
 def lcas(line):
@@ -269,7 +270,7 @@ def get_trackrows(line):
     line = json.loads(line)
     track = line.get('track')
     if track is not None:
-        return TrackRow(track['f'], track['p'], track['x'], track['y'], track.get('prediction_number'))
-    else:
-        return None
+        return TrackRow(track['f'], track['p'], track['x'], track['y'],
+                        track.get('prediction_number'))
+    return None
                     
