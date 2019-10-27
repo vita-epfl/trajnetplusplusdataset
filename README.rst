@@ -101,3 +101,15 @@ Citations
         journal = "Proceedings of the IEEE international conference on Computer Vision and Pattern Recognition (CVPR)",
         year = 2018,
     }
+
+* ``L-CAS``:
+
+.. code-block::
+
+    @article{Sun20173DOFPT,
+      title={3DOF Pedestrian Trajectory Prediction Learned from Long-Term Autonomous Mobile Robot Deployment Data},
+      author={Li Sun and Zhi Yan and Sergi Molina Mellado and Marc Hanheide and Tom Duckett},
+      journal={2018 IEEE International Conference on Robotics and Automation (ICRA)},
+      year={2017},
+      pages={1-7}
+    }
