@@ -88,9 +88,31 @@ Difference in generated data
 
 Citations
 ---------
+* ``eth``: 
 
-* ``syi``: Shuai Yi, Hongsheng Li, and Xiaogang Wang. Understanding Pedestrian Behaviors from Stationary Crowd Groups. In Proceedings of IEEE Conference on Computer Vision and Pattern Recognition (CVPR 2015).
-* ``edinburgh``: B. Majecka, "Statistical models of pedestrian behaviour in the Forum", MSc Dissertation, School of Informatics, University of Edinburgh, 2009.
+.. code-block::
+
+    @article{Pellegrini2009YoullNW,
+      title={You'll never walk alone: Modeling social behavior for multi-target tracking},
+      author={Stefano Pellegrini and Andreas Ess and Konrad Schindler and Luc Van Gool},
+      journal={2009 IEEE 12th International Conference on Computer Vision},
+      year={2009},
+      pages={261-268}
+    }
+    
+* ``ucy``:
+
+.. code-block::
+
+    @article{Lerner2007CrowdsBE,
+      title={Crowds by Example},
+      author={Alon Lerner and Yiorgos Chrysanthou and Dani Lischinski},
+      journal={Comput. Graph. Forum},
+      year={2007},
+      volume={26},
+      pages={655-664}
+    }
+
 * ``wildtrack``:
 
 .. code-block::
@@ -113,3 +135,18 @@ Citations
       year={2017},
       pages={1-7}
     }
+
+* ``CFF``:
+
+.. code-block::
+
+  @article{Alahi2014SociallyAwareLC,
+      title={Socially-Aware Large-Scale Crowd Forecasting},
+      author={Alexandre Alahi and Vignesh Ramanathan and Fei-Fei Li},
+      journal={2014 IEEE Conference on Computer Vision and Pattern Recognition},
+      year={2014},
+      pages={2211-2218}
+    }
+    
+* ``syi``: Shuai Yi, Hongsheng Li, and Xiaogang Wang. Understanding Pedestrian Behaviors from Stationary Crowd Groups. In Proceedings of IEEE Conference on Computer Vision and Pattern Recognition (CVPR 2015).
+* ``edinburgh``: B. Majecka, "Statistical models of pedestrian behaviour in the Forum", MSc Dissertation, School of Informatics, University of Edinburgh, 2009.
