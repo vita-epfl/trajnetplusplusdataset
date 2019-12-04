@@ -7,7 +7,7 @@ from .kalman import predict as kalman_predict
 from .interactions import check_interaction, group
 from .interactions import get_interaction_type
 
-def get_type(scene):
+def get_type(scene, obs_len, pred_len):
     '''
     Categorization of Single Scene
     :param scene: All trajectories as TrackRows
@@ -16,7 +16,7 @@ def get_type(scene):
 
     ## Params
     static_threshold = 1.0
-    linear_threshold = 1.0
+    linear_threshold = 0.5
 
     ## Interactions
     inter_pos_range = 15
@@ -35,19 +35,20 @@ def get_type(scene):
         return np.sqrt((row1.x - row2.x) ** 2 + (row1.y - row2.y) ** 2)
 
     ## Type 2
-    def linear_system(scene):
+    def linear_system(scene, obs_len, pred_len):
         '''
         return: True if the traj is linear according to Kalman
         '''
-        kalman_prediction, _ = kalman_predict(scene)[0]
+        kalman_prediction, _ = kalman_predict(scene, obs_len, pred_len)[0]
         return trajnettools.metrics.final_l2(scene[0], kalman_prediction)
 
     ## Type 3
-    def interaction(rows, pos_range=15, dist_thresh=5):
+    def interaction(rows, pos_range, dist_thresh, obs_len):
         '''
         :return: Determine if interaction exists and type (optionally)
         '''
-        return check_interaction(rows, pos_range, dist_thresh)
+        return check_interaction(rows, pos_range=pos_range, \
+                                 dist_thresh=dist_thresh, obs_len=obs_len)
 
     ## Category Tags
     mult_tag = []
@@ -58,12 +59,12 @@ def get_type(scene):
         mult_tag.append(1)
 
     # Linear
-    elif linear_system(scene) < linear_threshold:
+    elif linear_system(scene, obs_len, pred_len) < linear_threshold:
         mult_tag.append(2)
 
     # Interactions
-    elif interaction(scene_xy, pos_range=inter_pos_range, dist_thresh=inter_dist_thresh) \
-         or group(scene_xy, grp_dist_thresh, grp_std_thresh):
+    elif interaction(scene_xy, inter_pos_range, inter_dist_thresh, obs_len) \
+         or group(scene_xy, grp_dist_thresh, grp_std_thresh, obs_len):
         mult_tag.append(3)
 
     # Non-Linear (No explainable reason)
@@ -72,21 +73,20 @@ def get_type(scene):
 
     # Interaction Types
     if mult_tag[0] == 3:
-        sub_tag = get_interaction_type(scene_xy,
-                                       pos_range=inter_pos_range, dist_thresh=inter_dist_thresh)
+        sub_tag = get_interaction_type(scene_xy, inter_pos_range, inter_dist_thresh, obs_len)
     else:
         sub_tag = []
 
     return mult_tag[0], mult_tag, sub_tag
 
-def check_collision(scene):
+def check_collision(scene, n_predictions):
     '''
     Skip the track if collision occurs between primanry and others
     return: True if collision occurs
     '''
     ped_interest = scene[0]
     for ped_other in scene[1:]:
-        if trajnettools.metrics.collision(ped_interest, ped_other):
+        if trajnettools.metrics.collision(ped_interest, ped_other, n_predictions):
             return True
     return False
 
@@ -97,7 +97,7 @@ def write(rows, path, new_scenes, new_frames):
     pysp_scenes = pysparkling.Context().parallelize(new_scenes).map(trajnettools.writers.trajnet)
     pysp_scenes.union(pysp_tracks).saveAsTextFile(output_path)
 
-def trajectory_type(rows, path, fps, track_id=0):
+def trajectory_type(rows, path, fps, track_id=0, args=None):
     """ Categorization of all scenes """
 
     ## Read
@@ -135,17 +135,17 @@ def trajectory_type(rows, path, fps, track_id=0):
 
         # Assert Test Scene length
         if test:
-            assert len(scenes_test[index][0]) >= 9, \
+            assert len(scenes_test[index][0]) >= args.obs_len, \
                    'Scene Test not adequate length'
 
         ## Check Collision
         ## Used in CFF Datasets to account for imperfect tracking
-        # if check_collision(scene):
+        # if check_collision(scene, args.pred_len):
         #     col_count += 1
         #     continue
 
         ## Get Tag
-        tag, mult_tag, sub_tag = get_type(scene)
+        tag, mult_tag, sub_tag = get_type(scene, args.obs_len, args.pred_len)
 
         ## Acceptance Probability of Different Types
         accept = [0.1, 1.0, 1.0, 1.0]
@@ -172,7 +172,7 @@ def trajectory_type(rows, path, fps, track_id=0):
 
             ## Append to list of scenes_test as well if Test Set
             if test:
-                new_frames_test |= set(ped_interest[i].frame for i in range(9))
+                new_frames_test |= set(ped_interest[i].frame for i in range(args.obs_len))
                 new_scenes_test.append(
                     trajnettools.data.SceneRow(track_id, ped_interest[0].pedestrian,
                                                ped_interest[0].frame, ped_interest[-1].frame,

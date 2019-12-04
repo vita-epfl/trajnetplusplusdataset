@@ -1,5 +1,5 @@
 """Create Trajnet data from original datasets."""
-
+import argparse
 import pysparkling
 import scipy.io
 
@@ -96,19 +96,21 @@ def get_trackrows(sc, input_file):
             .filter(lambda r: r is not None)
             .cache())
 
-def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2, fps=2.5, order_frames=False):
+# def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2, fps=2.5, order_frames=False):
+def write(input_rows, output_file, args):
     """ Write Valid Scenes without categorization """
 
     print(" Entering Writing ")
     ## To handle two different time stamps 7:00 and 17:00 of cff
-    if order_frames:
+    if args.order_frames:
         frames = sorted(set(input_rows.map(lambda r: r.frame).toLocalIterator()),
                         key=lambda frame: frame % 100000)
     else:
         frames = sorted(set(input_rows.map(lambda r: r.frame).toLocalIterator()))
+    
     # split
-    train_split_index = int(len(frames) * train_fraction)
-    val_split_index = train_split_index + int(len(frames) * val_fraction)
+    train_split_index = int(len(frames) * args.train_fraction)
+    val_split_index = train_split_index + int(len(frames) * args.val_fraction)
     train_frames = set(frames[:train_split_index])
     val_frames = set(frames[train_split_index:val_split_index])
     test_frames = set(frames[val_split_index:])
@@ -116,89 +118,110 @@ def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2, fps=2.5
     # train dataset
     train_rows = input_rows.filter(lambda r: r.frame in train_frames)
     train_output = output_file.format(split='train')
-    train_scenes = Scenes(fps=fps).rows_to_file(train_rows, train_output)
+    train_scenes = Scenes(fps=args.fps, start_scene_id=0, args=args).rows_to_file(train_rows, train_output)
 
     # validation dataset
     val_rows = input_rows.filter(lambda r: r.frame in val_frames)
     val_output = output_file.format(split='val')
-    val_scenes = Scenes(start_scene_id=train_scenes.scene_id, fps=fps).rows_to_file(val_rows, val_output)
+    val_scenes = Scenes(fps=args.fps, start_scene_id=train_scenes.scene_id, args=args).rows_to_file(val_rows, val_output)
 
     # public test dataset
     test_rows = input_rows.filter(lambda r: r.frame in test_frames)
     test_output = output_file.format(split='test')
-    test_scenes = Scenes(start_scene_id=val_scenes.scene_id,
-                         chunk_size=21, visible_chunk=9, fps=fps) # !!! Chunk Stride
+    test_scenes = Scenes(fps=args.fps, start_scene_id=val_scenes.scene_id, args=args) # !!! Chunk Stride
     test_scenes.rows_to_file(test_rows, test_output)
+
     # private test dataset
     private_test_output = output_file.format(split='test_private')
-    private_test_scenes = Scenes(start_scene_id=val_scenes.scene_id, chunk_size=21, fps=fps)
+    private_test_scenes = Scenes(fps=args.fps, start_scene_id=val_scenes.scene_id, args=args)
     private_test_scenes.rows_to_file(test_rows, private_test_output)
 
-def categorize(sc, input_file, fps=2.5, train=False, test=False):
+def categorize(sc, input_file, args):
     """ Categorize the Scenes """
 
     print(" Entering Categorizing ")
 
     # Decide which folders to categorize #
-    if train:
+    if args.train_fraction == 1.0:
         #Train
         print("Only train")
         train_rows = get_trackrows(sc, input_file.replace('split', '').format('train'))
         train_id = trajectory_type(train_rows, input_file.replace('split', '').format('train'),
-                                   fps=fps, track_id=0)
+                                   fps=args.fps, track_id=0, args=args)
 
-    elif test:
+    elif (args.train_fraction + args.val_fraction) == 0.0:
         #Test
         print("Only test")
         test_rows = get_trackrows(sc, input_file.replace('split', '').format('test_private'))
         _ = trajectory_type(test_rows, input_file.replace('split', '').format('test_private'),
-                            fps=fps, track_id=0)
+                            fps=args.fps, track_id=0, args=args)
 
     else:
         print("All Three")
         #Train
         train_rows = get_trackrows(sc, input_file.replace('split', '').format('train'))
         train_id = trajectory_type(train_rows, input_file.replace('split', '').format('train'),
-                                   fps=fps, track_id=0)
+                                   fps=args.fps, track_id=0, args=args)
 
         #Val
         val_rows = get_trackrows(sc, input_file.replace('split', '').format('val'))
         val_id = trajectory_type(val_rows, input_file.replace('split', '').format('val'),
-                                 fps=fps, track_id=train_id)
+                                 fps=args.fps, track_id=train_id, args=args)
 
         #Test
         test_rows = get_trackrows(sc, input_file.replace('split', '').format('test_private'))
         _ = trajectory_type(test_rows, input_file.replace('split', '').format('test_private'),
-                            fps=fps, track_id=val_id)
+                            fps=args.fps, track_id=val_id, args=args)
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--obs_len', type=int, default=9,
+                        help='Length of observation')
+    parser.add_argument('--pred_len', type=int, default=12,
+                        help='Length of prediction')
+    parser.add_argument('--train_fraction', default=0.6, type=float,
+                        help='Training set fraction')
+    parser.add_argument('--val_fraction', default=0.2, type=float,
+                        help='Validation set fraction')
+    parser.add_argument('--fps', default=2.5, type=float,
+                        help='fps')    
+    parser.add_argument('--order_frames', action='store_true',
+                        help='For CFF')
+    parser.add_argument('--chunk_stride', type=int, default=2,
+                        help='Sampling Stride')
+    parser.add_argument('--min_length', default=0.0, type=float,
+                        help='Min Length of Primary Trajectory')
+
+    args = parser.parse_args()
     sc = pysparkling.Context()
 
     # Example Conversions
     # # real datasets
     write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
-          'output_pre/{split}/biwi_hotel.ndjson')
-    categorize(sc, 'output_pre/{split}/biwi_hotel.ndjson')
+          'output_pre/{split}/biwi_hotel.ndjson', args)
+    categorize(sc, 'output_pre/{split}/biwi_hotel.ndjson', args)
     write(crowds(sc, 'data/raw/crowds/crowds_zara02.vsp'),
-          'output_pre/{split}/crowds_zara02.ndjson')
-    categorize(sc, 'output_pre/{split}/crowds_zara02.ndjson')
+          'output_pre/{split}/crowds_zara02.ndjson', args)
+    categorize(sc, 'output_pre/{split}/crowds_zara02.ndjson', args)
     write(crowds(sc, 'data/raw/crowds/crowds_zara03.vsp'),
-          'output_pre/{split}/crowds_zara03.ndjson')
-    categorize(sc, 'output_pre/{split}/crowds_zara03.ndjson')
+          'output_pre/{split}/crowds_zara03.ndjson', args)
+    categorize(sc, 'output_pre/{split}/crowds_zara03.ndjson', args)
     write(crowds(sc, 'data/raw/crowds/students001.vsp'),
-          'output_pre/{split}/crowds_students001.ndjson')
-    categorize(sc, 'output_pre/{split}/crowds_students001.ndjson')
+          'output_pre/{split}/crowds_students001.ndjson', args)
+    categorize(sc, 'output_pre/{split}/crowds_students001.ndjson', args)
     write(crowds(sc, 'data/raw/crowds/students003.vsp'),
-          'output_pre/{split}/crowds_students003.ndjson')
-    categorize(sc, 'output_pre/{split}/crowds_students003.ndjson')
+          'output_pre/{split}/crowds_students003.ndjson', args)
+    categorize(sc, 'output_pre/{split}/crowds_students003.ndjson', args)
 
-    # # new datasets
-    write(wildtrack(sc, 'data/raw/wildtrack/Wildtrack_dataset/annotations_positions/*.json'),
-          'output_pre/{split}/wildtrack.ndjson', fps=2)
-    categorize(sc, 'output_pre/{split}/wildtrack.ndjson', fps=2)
-    write(lcas(sc, 'data/raw/lcas/test/data.csv'),
-          'output_pre/{split}/lcas.ndjson')
-    categorize(sc, 'output_pre/{split}/lcas.ndjson')
+    # # # new datasets
+    # write(lcas(sc, 'data/raw/lcas/test/data.csv'),
+    #       'output_pre/{split}/lcas.ndjson', args)
+    # categorize(sc, 'output_pre/{split}/lcas.ndjson', args)
+
+    # args.fps = 2
+    # write(wildtrack(sc, 'data/raw/wildtrack/Wildtrack_dataset/annotations_positions/*.json'),
+    #       'output_pre/{split}/wildtrack.ndjson', args)
+    # categorize(sc, 'output_pre/{split}/wildtrack.ndjson', args)
 
     # # CFF: More trajectories
     # # Chunk_stride > 20 preferred.

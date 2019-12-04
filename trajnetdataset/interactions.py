@@ -62,13 +62,14 @@ def compute_interaction(theta_rel_orig, dist_rel, angle, dist_thresh, angle_rang
                          & (dist_rel < dist_thresh) & (theta_rel < 500) == 1
     return interaction_matrix
 
-def check_interaction(rows, pos_range=15, dist_thresh=5, choice='pos', pos_angle=0, vel_angle=0, vel_range=15, output='all'):
+def check_interaction(rows, pos_range=15, dist_thresh=5, choice='pos', \
+                      pos_angle=0, vel_angle=0, vel_range=15, output='all', obs_len=9):
 
     path = rows[:, 0]
     neigh_path = rows[:, 1:]
-    theta_interaction, _ = compute_theta_interaction(path, neigh_path)
-    vel_interaction, _ = compute_velocity_interaction(path, neigh_path)
-    dist_rel = compute_dist_rel(path, neigh_path)
+    theta_interaction, _ = compute_theta_interaction(path, neigh_path, obs_len)
+    vel_interaction, _ = compute_velocity_interaction(path, neigh_path, obs_len)
+    dist_rel = compute_dist_rel(path, neigh_path, obs_len)
 
     ## str choice
     if choice == 'pos':
@@ -105,35 +106,36 @@ def interaction_length(interaction_matrix, length=1):
     interaction_sum = np.sum(interaction_matrix, axis=0)
     return interaction_sum >= length
 
-def leader_folllower(rows, pos_range=15, dist_thresh=5):
+def leader_folllower(rows, pos_range=15, dist_thresh=5, obs_len=9):
     interaction_matrix = check_interaction(rows, pos_range=pos_range, dist_thresh=dist_thresh,
-                                           choice='bothpos', output='matrix')
+                                           choice='bothpos', output='matrix', obs_len=obs_len)
     interaction_index = interaction_length(interaction_matrix, length=5)
     return np.any(interaction_index)
 
-def collision_avoidance(rows, pos_range=15, dist_thresh=5):
-    interaction_matrix = check_interaction(rows, pos_range=pos_range, dist_thresh=dist_thresh,
-                                           choice='bothpos', vel_angle=180, output='matrix')
+def collision_avoidance(rows, pos_range=15, dist_thresh=5, obs_len=9):
+    interaction_matrix = check_interaction(rows, pos_range=pos_range, dist_thresh=dist_thresh, \
+                                           choice='bothpos', vel_angle=180, \
+                                           output='matrix', obs_len=obs_len)
     interaction_index = interaction_length(interaction_matrix, length=1)
     return np.any(interaction_index)
 
-def group(rows, dist_thresh=0.8, std_thresh=0.2):
-    interaction_index = check_group(rows, dist_thresh, std_thresh)
+def group(rows, dist_thresh=0.8, std_thresh=0.2, obs_len=9):
+    interaction_index = check_group(rows, dist_thresh, std_thresh, obs_len)
     return np.any(interaction_index)
 
-def get_interaction_type(rows, pos_range=15, dist_thresh=5):
+def get_interaction_type(rows, pos_range=15, dist_thresh=5, obs_len=9):
     interaction_type = []
-    if leader_folllower(rows, pos_range, dist_thresh):
+    if leader_folllower(rows, pos_range, dist_thresh, obs_len):
         interaction_type.append(1)
-    if collision_avoidance(rows, pos_range, dist_thresh):
+    if collision_avoidance(rows, pos_range, dist_thresh, obs_len):
         interaction_type.append(2)
-    if group(rows):
+    if group(rows, obs_len=obs_len):
         interaction_type.append(3)
     if interaction_type == []:
         interaction_type.append(4)
     return interaction_type
 
-def check_group(rows, dist_thresh=0.8, std_thresh=0.2):
+def check_group(rows, dist_thresh=0.8, std_thresh=0.2, obs_len=9):
     ## Identify Groups
     ## dist_thresh: Distance threshold to be withinin a group
     ## std_thresh: Std deviation threshold for variation of distance
@@ -142,8 +144,10 @@ def check_group(rows, dist_thresh=0.8, std_thresh=0.2):
     neigh_path = rows[:, 1:]
 
     ## Horizontal Position
-    interaction_matrix_1 = check_interaction(rows, pos_angle=90, pos_range=45, output='matrix')
-    interaction_matrix_2 = check_interaction(rows, pos_angle=270, pos_range=45, output='matrix')
+    interaction_matrix_1 = check_interaction(rows, pos_angle=90, pos_range=45, \
+                                             output='matrix', obs_len=obs_len)
+    interaction_matrix_2 = check_interaction(rows, pos_angle=270, pos_range=45, \
+                                             output='matrix', obs_len=obs_len)
     neighs_side = np.any(interaction_matrix_1, axis=0) | np.any(interaction_matrix_2, axis=0)
 
     ## Distance Maintain
