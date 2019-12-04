@@ -9,12 +9,10 @@ def main():
                         help='Trajnet dataset file(s).')
     args = parser.parse_args()
 
-    print('{dataset:>60s}'.format(dataset=''))
-
-    tags = {1: [], 2: [], 3: [], 4: []}
-    sub_tags = {1: [], 2: [], 3: [], 4: []}
-
     for dataset_file in args.dataset_files:
+        print('{dataset:>60s}'.format(dataset=dataset_file))
+        tags = {1: [], 2: [], 3: [], 4: []}
+        sub_tags = {1: [], 2: [], 3: [], 4: []}
         with open(dataset_file, 'r') as f:
             for line in f:
                 line = json.loads(line)
@@ -28,6 +26,8 @@ def main():
                     for s in s_tag:
                         sub_tags[s].append(scene_id)
 
+        print("Total Scenes")
+        print(len(tags[1]) + len(tags[2]) + len(tags[3]) + len(tags[4]))
         print("Main Tags")
         print("Type 1: ", len(tags[1]), "Type 2: ", len(tags[2]), "Type 3: ", len(tags[3]), "Type 4: ", len(tags[4]))
         print("Sub Tags")

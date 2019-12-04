@@ -7,7 +7,6 @@ from . import readers
 from .scene import Scenes
 from .get_type import trajectory_type
 
-
 def biwi(sc, input_file):
     print('processing ' + input_file)
     return (sc
@@ -236,7 +235,12 @@ def main():
     # write(controlled(sc, 'data/raw/controlled/orca_traj_far.txt'),
     #       'output_pre/{split}/controlled_far.ndjson', train_fraction=1.0, val_fraction=0)
     # categorize(sc, 'output_pre/{split}/controlled_far.ndjson', train=True)
-
+    # write(controlled(sc, 'data/raw/controlled/circle_orca_traj_4.txt'),
+    #       'output_pre/{split}/controlled_4.ndjson')
+    # categorize(sc, 'output_pre/{split}/controlled_4.ndjson')
+    # write(controlled(sc, 'data/raw/controlled/circle_orca_traj_6.txt'),
+    #       'output_pre/{split}/controlled_6.ndjson', train_fraction=1.0, val_fraction=0)
+    # categorize(sc, 'output_pre/{split}/controlled_6.ndjson', train=True)
 
 if __name__ == '__main__':
     main()
