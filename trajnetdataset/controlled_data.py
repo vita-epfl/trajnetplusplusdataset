@@ -39,20 +39,52 @@ def overfit_initialize(num_ped, sim):
     trajectories = [[positions[i]] for i in range(num_ped)]
     return trajectories, positions, goals, speed
 
+def overfit_initialize_circle(num_ped, sim, center=(0,0), radius=10):
+    positions = []
+    goals = []
+    speed = []
+    step = (2 * np.pi) / num_ped
+    radius = radius + np.random.uniform(-3, 3)
+    for pos in range(num_ped):
+        angle = pos * step 
+        px = center[0] + radius * np.cos(angle)
+        py_ = center[1] + radius * np.sin(angle)
+        gx = center[0] + radius * np.cos(angle + np.pi)
+        gy_ = center[1] + radius * np.sin(angle + np.pi)
+        positions.append((px, py_))
+        goals.append((gx, gy_))
+
+        if sim is not None:
+            sim.addAgent((px, py_))
+
+        rand_speed = random.uniform(0.8, 1.2)
+        vx = 0
+        vy = 0
+        speed.append((vx, vy))
+        
+    trajectories = [[positions[i]] for i in range(num_ped)]
+    return trajectories, positions, goals, speed
+
 def generate_orca_trajectory(num_ped, min_dist=3, react_time=1.5, end_range=1.0):
     """ Simulating Scenario using ORCA """
 
+    ## CA
     sim = rvo2.PyRVOSimulator(1 / 2.5, min_dist, 10, react_time, 2, 0.4, 2)
+    ##Circle
+    # sim = rvo2.PyRVOSimulator(1 / 2.5, 2, 10, 2, 2, 0.4, 1.2)
+
     #1.5
 
     ##Initiliaze a scene
     trajectories, _, goals, speed = overfit_initialize(num_ped, sim)
+    # trajectories, positions, goals, speed = overfit_initialize_circle(num_ped, sim)
+
     done = False
     reaching_goal_by_ped = [False] * num_ped
     count = 0
 
     ##Simulate a scene
-    while not done and count < 150:
+    while not done and count < 3000:
         sim.doStep()
         reaching_goal = []
         for i in range(num_ped):
@@ -73,7 +105,7 @@ def generate_orca_trajectory(num_ped, min_dist=3, react_time=1.5, end_range=1.0)
                 reaching_goal.append(False)
                 velocity = np.array((goals[i][0] - position[0], goals[i][1] - position[1]))
                 speed = np.linalg.norm(velocity)
-                pref_vel = velocity / speed if speed > 1 else velocity
+                pref_vel = 1 * velocity / speed if speed > 1 else velocity
                 sim.setAgentPrefVelocity(i, tuple(pref_vel.tolist()))
         count += 1
         done = all(reaching_goal)
@@ -107,7 +139,7 @@ def viz(trajectories):
         trajectory = np.array(trajectories[i])
         plt.plot(trajectory[:, 0], trajectory[:, 1])
 
-    plt.xlim(-16, 16)
+    plt.xlim(-7, 7)
     plt.show()
     plt.close()
 
@@ -133,17 +165,20 @@ def main():
     dict_params['medium2'] = [[3, 2]]
     dict_params['far'] = [[4, 2]]
 
-    params = dict_params[args.simulation_type]
+    ## Circle
+    # dict_params = {}
+    # dict_params['medium1'] = [[0.6, 1]]
+    # params = dict_params[args.simulation_type]
 
     for min_dist, react_time in params:
         print("min_dist, time_react:", min_dist, react_time)
         ##Decide the number of scenes
         if not args.test:
-            number_traj = 100
+            number_traj = 300
         else:
             number_traj = 10
         ##Decide number of people
-        num_ped = 8
+        num_ped = 4
 
         count = 0
         last_frame = -5
@@ -152,12 +187,13 @@ def main():
             if (i+1) % 10 == 0:
                 print(i)
 
-            ##Generate the scene
+            # ##Generate the scene
             trajectories = generate_orca_trajectory(num_ped=num_ped,
                                                     min_dist=min_dist,
                                                     react_time=react_time)
             # viz(trajectories)
-            # ##Write the Scene to Txt
+            
+            # ##Write the Scene to Txt (for collision)
             if not args.test:
                 last_frame = write_to_txt(trajectories, 'data/raw/controlled/'
                                           + args.simulator + '_traj_'
@@ -168,6 +204,19 @@ def main():
                                           + args.simulator + '_traj_'
                                           + args.simulation_type + '.txt',
                                           count=count, frame=last_frame+5)
+
+            # ##Write the Scene to Txt (for Circle)
+            # if not args.test:
+            #     last_frame = write_to_txt(trajectories, 'data/raw/controlled/circle_'
+            #                               + args.simulator + '_traj_'
+            #                               + str(num_ped) + '.txt',
+            #                               count=count, frame=last_frame+5)
+            # else:
+            #     last_frame = write_to_txt(trajectories, 'data/raw/controlled/circle_test_'
+            #                               + args.simulator + '_traj_'
+            #                               + args.simulation_type + '.txt',
+            #                               count=count, frame=last_frame+5)
+
             count += num_ped
 
 if __name__ == '__main__':
