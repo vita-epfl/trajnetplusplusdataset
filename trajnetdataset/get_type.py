@@ -147,10 +147,7 @@ def trajectory_type(rows, path, fps, track_id=0, args=None):
         ## Get Tag
         tag, mult_tag, sub_tag = get_type(scene, args.obs_len, args.pred_len)
 
-        ## Acceptance Probability of Different Types
-        accept = [0.1, 1.0, 1.0, 1.0]
-
-        if np.random.uniform() < accept[tag - 1]:
+        if np.random.uniform() < args.acceptance[tag - 1]:
             ## Update Tags
             tags[tag].append(track_id)
             for tt in mult_tag:

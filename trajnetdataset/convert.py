@@ -6,6 +6,8 @@ import scipy.io
 from . import readers
 from .scene import Scenes
 from .get_type import trajectory_type
+from .get_test_type import trajectory_test_type
+
 
 def biwi(sc, input_file):
     print('processing ' + input_file)
@@ -153,7 +155,7 @@ def categorize(sc, input_file, args):
         #Test
         print("Only test")
         test_rows = get_trackrows(sc, input_file.replace('split', '').format('test_private'))
-        _ = trajectory_type(test_rows, input_file.replace('split', '').format('test_private'),
+        _ = trajectory_test_type(test_rows, input_file.replace('split', '').format('test_private'),
                             fps=args.fps, track_id=0, args=args)
 
     else:
@@ -170,7 +172,7 @@ def categorize(sc, input_file, args):
 
         #Test
         test_rows = get_trackrows(sc, input_file.replace('split', '').format('test_private'))
-        _ = trajectory_type(test_rows, input_file.replace('split', '').format('test_private'),
+        _ = trajectory_test_type(test_rows, input_file.replace('split', '').format('test_private'),
                             fps=args.fps, track_id=val_id, args=args)
 
 def main():
@@ -191,6 +193,9 @@ def main():
                         help='Sampling Stride')
     parser.add_argument('--min_length', default=0.0, type=float,
                         help='Min Length of Primary Trajectory')
+    parser.add_argument('--acceptance', nargs='+', type=float,
+                        default=[0.1, 1, 1, 1],
+                        help='acceptance ratio of different trajectory types')
 
     args = parser.parse_args()
     sc = pysparkling.Context()
@@ -200,9 +205,9 @@ def main():
     write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
           'output_pre/{split}/biwi_hotel.ndjson', args)
     categorize(sc, 'output_pre/{split}/biwi_hotel.ndjson', args)
-    write(crowds(sc, 'data/raw/crowds/crowds_zara02.vsp'),
-          'output_pre/{split}/crowds_zara02.ndjson', args)
-    categorize(sc, 'output_pre/{split}/crowds_zara02.ndjson', args)
+    write(crowds(sc, 'data/raw/crowds/crowds_zara01.vsp'),
+          'output_pre/{split}/crowds_zara01.ndjson', args)
+    categorize(sc, 'output_pre/{split}/crowds_zara01.ndjson', args)
     write(crowds(sc, 'data/raw/crowds/crowds_zara03.vsp'),
           'output_pre/{split}/crowds_zara03.ndjson', args)
     categorize(sc, 'output_pre/{split}/crowds_zara03.ndjson', args)
@@ -214,14 +219,14 @@ def main():
     categorize(sc, 'output_pre/{split}/crowds_students003.ndjson', args)
 
     # # # new datasets
-    # write(lcas(sc, 'data/raw/lcas/test/data.csv'),
-    #       'output_pre/{split}/lcas.ndjson', args)
-    # categorize(sc, 'output_pre/{split}/lcas.ndjson', args)
+    write(lcas(sc, 'data/raw/lcas/test/data.csv'),
+          'output_pre/{split}/lcas.ndjson', args)
+    categorize(sc, 'output_pre/{split}/lcas.ndjson', args)
 
-    # args.fps = 2
-    # write(wildtrack(sc, 'data/raw/wildtrack/Wildtrack_dataset/annotations_positions/*.json'),
-    #       'output_pre/{split}/wildtrack.ndjson', args)
-    # categorize(sc, 'output_pre/{split}/wildtrack.ndjson', args)
+    args.fps = 2
+    write(wildtrack(sc, 'data/raw/wildtrack/Wildtrack_dataset/annotations_positions/*.json'),
+          'output_pre/{split}/wildtrack.ndjson', args)
+    categorize(sc, 'output_pre/{split}/wildtrack.ndjson', args)
 
     # # CFF: More trajectories
     # # Chunk_stride > 20 preferred.

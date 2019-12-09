@@ -23,7 +23,7 @@ class Scenes(object):
         return (row1.x - row2.x)**2 + (row1.y - row2.y)**2
 
     @staticmethod
-    def close_pedestrians(rows, cell_size=5):
+    def close_pedestrians(rows, cell_size=10):
         """Fast computation of spatially close pedestrians.
 
         By frame, get the list of pedestrian ids that or close to other
