@@ -5,9 +5,87 @@ import argparse
 import os
 
 import numpy as np
+from numpy.linalg import norm
 import matplotlib.pyplot as plt
 
 import rvo2
+
+def generate_circle_crossing(num_ped, sim, radius=10):
+    positions = []
+    goals = []
+    speed = []
+    agent_list = []
+    for i in range(num_ped):
+        while True:
+            angle = np.random.random() * np.pi * 2
+            # add some noise to simulate all the possible cases robot could meet with human
+            px_noise = (np.random.random() - 0.5)  ## human.v_pref
+            py_noise = (np.random.random() - 0.5)  ## human.v_pref
+            px = radius * np.cos(angle) + px_noise
+            py = radius * np.sin(angle) + py_noise
+            collide = False
+            for agent in agent_list:
+                # min_dist = 2*human.radius + discomfort_dist
+                min_dist = 4 
+                if norm((px - agent[0], py - agent[1])) < min_dist or \
+                        norm((px - agent[2], py - agent[3])) < min_dist:
+                    collide = True
+                    break
+            if not collide:
+                break
+        positions.append((px, py))
+        goals.append((-px, -py))
+        sim.addAgent((px, py))
+        vx = 0
+        vy = 0
+        speed.append((vx, vy))
+        agent_list.append([px, py, -px, -py])
+    trajectories = [[positions[i]] for i in range(num_ped)]
+    return trajectories, positions, goals, speed
+
+def generate_square_crossing(num_ped, sim, square_width=12):
+    positions = []
+    goals = []
+    speed = []
+    agent_list = []
+    square_width = 20
+
+    for i in range(num_ped):
+        if np.random.random() > 0.5:
+            sign = -1
+        else:
+            sign = 1
+        min_dist = 4
+        while True:
+            px = np.random.random() * square_width * 0.5 * sign
+            py = (np.random.random() - 0.5) * square_width
+            collide = False
+            for agent in agent_list:
+                if norm((px - agent[0], py - agent[1])) < min_dist:
+                    collide = True
+                    break
+            if not collide:
+                break
+        while True:
+            gx = np.random.random() * square_width * 0.5 * -sign
+            gy = (np.random.random() - 0.5) * square_width
+            collide = False
+            for agent in agent_list:
+                if norm((gx - agent[2], gy - agent[3])) < min_dist:
+                    collide = True
+                    break
+            if not collide:
+                break
+
+        positions.append((px, py))
+        goals.append((gx, gy))
+        sim.addAgent((px, py))
+        vx = 0
+        vy = 0
+        speed.append((vx, vy))
+        agent_list.append([px, py, gx, gy])
+    trajectories = [[positions[i]] for i in range(num_ped)]
+    return trajectories, positions, goals, speed
 
 def overfit_initialize(num_ped, sim):
     """ Scenario initialization """
@@ -69,15 +147,16 @@ def generate_orca_trajectory(num_ped, min_dist=3, react_time=1.5, end_range=1.0)
     """ Simulating Scenario using ORCA """
 
     ## CA
-    sim = rvo2.PyRVOSimulator(1 / 2.5, min_dist, 10, react_time, 2, 0.4, 2)
+    # sim = rvo2.PyRVOSimulator(1 / 2.5, min_dist, 10, react_time, 2, 0.4, 2)
     ##Circle
-    # sim = rvo2.PyRVOSimulator(1 / 2.5, 2, 10, 2, 2, 0.4, 1.2)
+    sim = rvo2.PyRVOSimulator(1 / 2.5, 2, 10, 2, 2, 0.4, 1.2)
 
     #1.5
 
     ##Initiliaze a scene
-    trajectories, _, goals, speed = overfit_initialize(num_ped, sim)
+    # trajectories, _, goals, speed = overfit_initialize(num_ped, sim)
     # trajectories, positions, goals, speed = overfit_initialize_circle(num_ped, sim)
+    trajectories, positions, goals, speed = generate_square_crossing(num_ped, sim)
 
     done = False
     reaching_goal_by_ped = [False] * num_ped
@@ -139,7 +218,8 @@ def viz(trajectories):
         trajectory = np.array(trajectories[i])
         plt.plot(trajectory[:, 0], trajectory[:, 1])
 
-    plt.xlim(-7, 7)
+    plt.xlim(-10, 10)
+    plt.xlim(-10, 10)
     plt.show()
     plt.close()
 
@@ -168,13 +248,13 @@ def main():
     ## Circle
     # dict_params = {}
     # dict_params['medium1'] = [[0.6, 1]]
-    # params = dict_params[args.simulation_type]
+    params = dict_params[args.simulation_type]
 
     for min_dist, react_time in params:
         print("min_dist, time_react:", min_dist, react_time)
         ##Decide the number of scenes
         if not args.test:
-            number_traj = 300
+            number_traj = 10
         else:
             number_traj = 10
         ##Decide number of people
@@ -191,19 +271,19 @@ def main():
             trajectories = generate_orca_trajectory(num_ped=num_ped,
                                                     min_dist=min_dist,
                                                     react_time=react_time)
-            # viz(trajectories)
+            viz(trajectories)
             
-            # ##Write the Scene to Txt (for collision)
-            if not args.test:
-                last_frame = write_to_txt(trajectories, 'data/raw/controlled/'
-                                          + args.simulator + '_traj_'
-                                          + args.simulation_type + '.txt',
-                                          count=count, frame=last_frame+5)
-            else:
-                last_frame = write_to_txt(trajectories, 'data/raw/controlled/test_'
-                                          + args.simulator + '_traj_'
-                                          + args.simulation_type + '.txt',
-                                          count=count, frame=last_frame+5)
+            # # ##Write the Scene to Txt (for collision)
+            # if not args.test:
+            #     last_frame = write_to_txt(trajectories, 'data/raw/controlled/'
+            #                               + args.simulator + '_traj_'
+            #                               + args.simulation_type + '.txt',
+            #                               count=count, frame=last_frame+5)
+            # else:
+            #     last_frame = write_to_txt(trajectories, 'data/raw/controlled/test_'
+            #                               + args.simulator + '_traj_'
+            #                               + args.simulation_type + '.txt',
+            #                               count=count, frame=last_frame+5)
 
             # ##Write the Scene to Txt (for Circle)
             # if not args.test:
