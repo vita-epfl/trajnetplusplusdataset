@@ -166,10 +166,13 @@ def categorize(sc, input_file, args):
                                    fps=args.fps, track_id=0, args=args)
 
         #Val
-        val_rows = get_trackrows(sc, input_file.replace('split', '').format('val'))
-        val_id = trajectory_type(val_rows, input_file.replace('split', '').format('val'),
-                                 fps=args.fps, track_id=train_id, args=args)
-
+        if args.val_fraction != 0:
+            val_rows = get_trackrows(sc, input_file.replace('split', '').format('val'))
+            val_id = trajectory_type(val_rows, input_file.replace('split', '').format('val'),
+                                     fps=args.fps, track_id=train_id, args=args)
+        else:
+            val_id = train_id
+            
         #Test
         test_rows = get_trackrows(sc, input_file.replace('split', '').format('test_private'))
         _ = trajectory_test_type(test_rows, input_file.replace('split', '').format('test_private'),
@@ -193,9 +196,23 @@ def main():
                         help='Sampling Stride')
     parser.add_argument('--min_length', default=0.0, type=float,
                         help='Min Length of Primary Trajectory')
-    parser.add_argument('--acceptance', nargs='+', type=float,
-                        default=[0.1, 1, 1, 1],
-                        help='acceptance ratio of different trajectory types')
+
+    ## For Trajectory categorizing and filtering 
+    categorizers = parser.add_argument_group('categorizers')
+    categorizers.add_argument('--static_threshold', type=float, default=1.0,
+                              help='Type I static threshold')
+    categorizers.add_argument('--linear_threshold', type=float, default=0.5,
+                              help='Type II linear threshold')
+    categorizers.add_argument('--inter_dist_thresh', type=float, default=5,
+                              help='Type IIId distance threshold for cone')
+    categorizers.add_argument('--inter_pos_range', type=float, default=15,
+                              help='Type IIId angle threshold for cone (degrees)')
+    categorizers.add_argument('--grp_dist_thresh', type=float, default=0.8,
+                              help='Type IIIc distance threshold for group')    
+    categorizers.add_argument('--grp_std_thresh', type=float, default=0.2,
+                              help='Type IIIc std deviation for group')   
+    categorizers.add_argument('--acceptance', nargs='+', type=float, default=[0.1, 1, 1, 1],
+                              help='acceptance ratio of different trajectory (I, II, III, IV) types')
 
     args = parser.parse_args()
     sc = pysparkling.Context()

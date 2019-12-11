@@ -7,24 +7,12 @@ from .kalman import predict as kalman_predict
 from .interactions import check_interaction, group
 from .interactions import get_interaction_type
 
-def get_type(scene, obs_len, pred_len):
+def get_type(scene, args):
     '''
     Categorization of Single Scene
-    :param scene: All trajectories as TrackRows
+    :param scene: All trajectories as TrackRows, args
     :return: The type of the traj
     '''
-
-    ## Params
-    static_threshold = 1.0
-    linear_threshold = 0.5
-
-    ## Interactions
-    inter_pos_range = 15
-    inter_dist_thresh = 5
-
-    ## Group
-    grp_dist_thresh = 0.8
-    grp_std_thresh = 0.2
 
     ## Get xy-coordinates from trackRows
     scene_xy = trajnettools.Reader.paths_to_xy(scene)
@@ -55,16 +43,16 @@ def get_type(scene, obs_len, pred_len):
     sub_tag = []
 
     # Static
-    if euclidean_distance(scene[0][0], scene[0][-1]) < static_threshold:
+    if euclidean_distance(scene[0][0], scene[0][-1]) < args.static_threshold:
         mult_tag.append(1)
 
     # Linear
-    elif linear_system(scene, obs_len, pred_len) < linear_threshold:
+    elif linear_system(scene, args.obs_len, args.pred_len) < args.linear_threshold:
         mult_tag.append(2)
 
     # Interactions
-    elif interaction(scene_xy, inter_pos_range, inter_dist_thresh, obs_len) \
-         or group(scene_xy, grp_dist_thresh, grp_std_thresh, obs_len):
+    elif interaction(scene_xy, args.inter_pos_range, args.inter_dist_thresh, args.obs_len) \
+         or group(scene_xy, args.grp_dist_thresh, args.grp_std_thresh, args.obs_len):
         mult_tag.append(3)
 
     # Non-Linear (No explainable reason)
@@ -73,7 +61,8 @@ def get_type(scene, obs_len, pred_len):
 
     # Interaction Types
     if mult_tag[0] == 3:
-        sub_tag = get_interaction_type(scene_xy, inter_pos_range, inter_dist_thresh, obs_len)
+        sub_tag = get_interaction_type(scene_xy, args.inter_pos_range, 
+                                       args.inter_dist_thresh, args.obs_len)
     else:
         sub_tag = []
 
@@ -145,7 +134,7 @@ def trajectory_type(rows, path, fps, track_id=0, args=None):
         #     continue
 
         ## Get Tag
-        tag, mult_tag, sub_tag = get_type(scene, args.obs_len, args.pred_len)
+        tag, mult_tag, sub_tag = get_type(scene, args)
 
         if np.random.uniform() < args.acceptance[tag - 1]:
             ## Update Tags
