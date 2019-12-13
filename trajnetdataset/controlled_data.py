@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 import rvo2
 
-def generate_circle_crossing(num_ped, sim, radius=10):
+def generate_circle_crossing(num_ped, sim, radius=4):
     positions = []
     goals = []
     speed = []
@@ -26,7 +26,7 @@ def generate_circle_crossing(num_ped, sim, radius=10):
             collide = False
             for agent in agent_list:
                 # min_dist = 2*human.radius + discomfort_dist
-                min_dist = 4 
+                min_dist = 0.8 
                 if norm((px - agent[0], py - agent[1])) < min_dist or \
                         norm((px - agent[2], py - agent[3])) < min_dist:
                     collide = True
@@ -43,12 +43,12 @@ def generate_circle_crossing(num_ped, sim, radius=10):
     trajectories = [[positions[i]] for i in range(num_ped)]
     return trajectories, positions, goals, speed
 
-def generate_square_crossing(num_ped, sim, square_width=12):
+def generate_square_crossing(num_ped, sim, square_width=2):
     positions = []
     goals = []
     speed = []
     agent_list = []
-    square_width = 20
+    square_width = 12
 
     for i in range(num_ped):
         if np.random.random() > 0.5:
@@ -146,17 +146,21 @@ def overfit_initialize_circle(num_ped, sim, center=(0,0), radius=10):
 def generate_orca_trajectory(num_ped, min_dist=3, react_time=1.5, end_range=1.0):
     """ Simulating Scenario using ORCA """
 
+    ## Default 
+    # sim = rvo2.PyRVOSimulator(1 / 60., 1.5, 5, 1.5, 2, 0.4, 2)
     ## CA
     # sim = rvo2.PyRVOSimulator(1 / 2.5, min_dist, 10, react_time, 2, 0.4, 2)
-    ##Circle
-    sim = rvo2.PyRVOSimulator(1 / 2.5, 2, 10, 2, 2, 0.4, 1.2)
+    ## Circle
+    # sim = rvo2.PyRVOSimulator(1 / 2.5, 2, 10, 2, 2, 0.4, 1.2)
+    ## Random Circle
+    sim = rvo2.PyRVOSimulator(1 / 4, 10, 10, 5, 5, 0.3, 1)
 
-    #1.5
 
     ##Initiliaze a scene
     # trajectories, _, goals, speed = overfit_initialize(num_ped, sim)
     # trajectories, positions, goals, speed = overfit_initialize_circle(num_ped, sim)
-    trajectories, positions, goals, speed = generate_square_crossing(num_ped, sim)
+    trajectories, positions, goals, speed = generate_circle_crossing(num_ped, sim)
+    # trajectories, positions, goals, speed = generate_square_crossing(num_ped, sim)
 
     done = False
     reaching_goal_by_ped = [False] * num_ped
@@ -189,7 +193,7 @@ def generate_orca_trajectory(num_ped, min_dist=3, react_time=1.5, end_range=1.0)
         count += 1
         done = all(reaching_goal)
 
-    return trajectories
+    return trajectories, count
 
 def write_to_txt(trajectories, path, count, frame):
     """ Write Trajectories to the text file """
@@ -218,8 +222,8 @@ def viz(trajectories):
         trajectory = np.array(trajectories[i])
         plt.plot(trajectory[:, 0], trajectory[:, 1])
 
-    plt.xlim(-10, 10)
-    plt.xlim(-10, 10)
+    plt.xlim(-5, 5)
+    plt.xlim(-5, 5)
     plt.show()
     plt.close()
 
@@ -254,11 +258,11 @@ def main():
         print("min_dist, time_react:", min_dist, react_time)
         ##Decide the number of scenes
         if not args.test:
-            number_traj = 10
+            number_traj = 300
         else:
             number_traj = 10
         ##Decide number of people
-        num_ped = 4
+        num_ped = 10
 
         count = 0
         last_frame = -5
@@ -268,12 +272,24 @@ def main():
                 print(i)
 
             # ##Generate the scene
-            trajectories = generate_orca_trajectory(num_ped=num_ped,
-                                                    min_dist=min_dist,
-                                                    react_time=react_time)
-            viz(trajectories)
-            
-            # # ##Write the Scene to Txt (for collision)
+            trajectories, count = generate_orca_trajectory(num_ped=num_ped,
+                                                           min_dist=min_dist,
+                                                           react_time=react_time)
+
+            # ##Write the Scene to Txt (for collision)
+            if not args.test:
+                last_frame = write_to_txt(trajectories, 'data/raw/controlled/'
+                                          + 'circle_crossing.txt',
+                                          count=count, frame=last_frame+5)
+            else:
+                last_frame = write_to_txt(trajectories, 'data/raw/controlled/test_'
+                                          + args.simulator + '_traj_'
+                                          + args.simulation_type + '.txt',
+                                          count=count, frame=last_frame+5)
+
+            # viz(trajectories)
+            # print("Count: ", count)
+            # ##Write the Scene to Txt (for collision)
             # if not args.test:
             #     last_frame = write_to_txt(trajectories, 'data/raw/controlled/'
             #                               + args.simulator + '_traj_'
