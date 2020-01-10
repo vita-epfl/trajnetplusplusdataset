@@ -3,9 +3,9 @@
 import trajnettools
 import numpy as np
 import pysparkling
-from .kalman import predict as kalman_predict
-from .interactions import check_interaction, group
-from .interactions import get_interaction_type
+from trajnettools.kalman import predict as kalman_predict
+from trajnettools.interactions import check_interaction, group
+from trajnettools.interactions import get_interaction_type
 
 def get_type(scene, args):
     '''
@@ -35,8 +35,9 @@ def get_type(scene, args):
         '''
         :return: Determine if interaction exists and type (optionally)
         '''
-        return check_interaction(rows, pos_range=pos_range, \
+        interaction_matrix = check_interaction(rows, pos_range=pos_range, \
                                  dist_thresh=dist_thresh, obs_len=obs_len)
+        return np.any(interaction_matrix)
 
     ## Category Tags
     mult_tag = []
@@ -52,7 +53,7 @@ def get_type(scene, args):
 
     # Interactions
     elif interaction(scene_xy, args.inter_pos_range, args.inter_dist_thresh, args.obs_len) \
-         or group(scene_xy, args.grp_dist_thresh, args.grp_std_thresh, args.obs_len):
+         or np.any(group(scene_xy, args.grp_dist_thresh, args.grp_std_thresh, args.obs_len)):
         mult_tag.append(3)
 
     # Non-Linear (No explainable reason)
