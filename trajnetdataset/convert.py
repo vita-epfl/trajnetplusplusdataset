@@ -6,8 +6,6 @@ import scipy.io
 from . import readers
 from .scene import Scenes
 from .get_type import trajectory_type
-from .get_test_type import trajectory_test_type
-
 
 def biwi(sc, input_file):
     print('processing ' + input_file)
@@ -155,7 +153,7 @@ def categorize(sc, input_file, args):
         #Test
         print("Only test")
         test_rows = get_trackrows(sc, input_file.replace('split', '').format('test_private'))
-        _ = trajectory_test_type(test_rows, input_file.replace('split', '').format('test_private'),
+        _ = trajectory_type(test_rows, input_file.replace('split', '').format('test_private'),
                             fps=args.fps, track_id=0, args=args)
 
     else:
@@ -175,7 +173,7 @@ def categorize(sc, input_file, args):
             
         #Test
         test_rows = get_trackrows(sc, input_file.replace('split', '').format('test_private'))
-        _ = trajectory_test_type(test_rows, input_file.replace('split', '').format('test_private'),
+        _ = trajectory_type(test_rows, input_file.replace('split', '').format('test_private'),
                             fps=args.fps, track_id=val_id, args=args)
 
 def main():
@@ -202,7 +200,7 @@ def main():
     categorizers.add_argument('--static_threshold', type=float, default=1.0,
                               help='Type I static threshold')
     categorizers.add_argument('--linear_threshold', type=float, default=0.5,
-                              help='Type II linear threshold')
+                              help='Type II linear threshold (0.3 for Synthetic)')
     categorizers.add_argument('--inter_dist_thresh', type=float, default=5,
                               help='Type IIId distance threshold for cone')
     categorizers.add_argument('--inter_pos_range', type=float, default=15,
@@ -236,56 +234,32 @@ def main():
     categorize(sc, 'output_pre/{split}/crowds_students003.ndjson', args)
 
     # # # new datasets
-    write(lcas(sc, 'data/raw/lcas/test/data.csv'),
-          'output_pre/{split}/lcas.ndjson', args)
-    categorize(sc, 'output_pre/{split}/lcas.ndjson', args)
+    # write(lcas(sc, 'data/raw/lcas/test/data.csv'),
+    #       'output_pre/{split}/lcas.ndjson', args)
+    # categorize(sc, 'output_pre/{split}/lcas.ndjson', args)
 
-    args.fps = 2
-    write(wildtrack(sc, 'data/raw/wildtrack/Wildtrack_dataset/annotations_positions/*.json'),
-          'output_pre/{split}/wildtrack.ndjson', args)
-    categorize(sc, 'output_pre/{split}/wildtrack.ndjson', args)
+    # args.fps = 2
+    # write(wildtrack(sc, 'data/raw/wildtrack/Wildtrack_dataset/annotations_positions/*.json'),
+    #       'output_pre/{split}/wildtrack.ndjson', args)
+    # categorize(sc, 'output_pre/{split}/wildtrack.ndjson', args)
+    # args.fps = 2.5 # (Default)
 
     # # CFF: More trajectories
-    # # Chunk_stride > 20 preferred.
-    # write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-10.csv'),
-    #       'output_pre/{split}/cff_10.ndjson', order_frames=True)
-    # categorize(sc, 'output_pre/{split}/cff_10.ndjson')
+    # # Chunk_stride > 20 preferred & order_frames.
+    # args.chunk_stride = 20
+    # args.order_frames = True
     # write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-06.csv'),
-    #       'output_pre/{split}/cff_06.ndjson', order_frames=True)
-    # categorize(sc, 'output_pre/{split}/cff_06.ndjson')
+    #       'output_pre/{split}/cff_06.ndjson', args)
+    # categorize(sc, 'output_pre/{split}/cff_06.ndjson', args)
+    # args.chunk_stride = 2 # (Default)
+    # args.order_frames = False # (Default)
 
-
-    # Eg. of 'Train Only' categorization
-    # write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
-    #       'output_pre/{split}/biwi_hotel.ndjson', train_fraction=1.0, val_fraction=0)
-    # categorize(sc, 'output_pre/{split}/biwi_hotel.ndjson', train=True)
-
-    # Eg. of 'Test Only' categorization
-    # write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
-    #       'output_pre/{split}/biwi_hotel.ndjson', train_fraction=0.0, val_fraction=0)
-    # categorize(sc, 'output_pre/{split}/biwi_hotel.ndjson', test=True)
-
-    # CA
-    # Generate Trajectories First. #
-    # # Train
-    # write(controlled(sc, 'data/raw/controlled/orca_traj_close.txt'),
-    #       'output_pre/{split}/controlled_close.ndjson', train_fraction=1.0, val_fraction=0)
-    # categorize(sc, 'output_pre/{split}/controlled_close.ndjson', train=True)
-    # write(controlled(sc, 'data/raw/controlled/orca_traj_medium1.txt'),
-    #       'output_pre/{split}/controlled_medium1.ndjson', train_fraction=1.0, val_fraction=0)
-    # categorize(sc, 'output_pre/{split}/controlled_medium1.ndjson', train=True)
-    # write(controlled(sc, 'data/raw/controlled/orca_traj_medium2.txt'),
-    #       'output_pre/{split}/controlled_medium2.ndjson', train_fraction=1.0, val_fraction=0)
-    # categorize(sc, 'output_pre/{split}/controlled_medium2.ndjson', train=True)
-    # write(controlled(sc, 'data/raw/controlled/orca_traj_far.txt'),
-    #       'output_pre/{split}/controlled_far.ndjson', train_fraction=1.0, val_fraction=0)
-    # categorize(sc, 'output_pre/{split}/controlled_far.ndjson', train=True)
-    # write(controlled(sc, 'data/raw/controlled/circle_orca_traj_4.txt'),
-    #       'output_pre/{split}/controlled_4.ndjson')
-    # categorize(sc, 'output_pre/{split}/controlled_4.ndjson')
-    # write(controlled(sc, 'data/raw/controlled/circle_orca_traj_6.txt'),
-    #       'output_pre/{split}/controlled_6.ndjson', train_fraction=1.0, val_fraction=0)
-    # categorize(sc, 'output_pre/{split}/controlled_6.ndjson', train=True)
+    # # Synthetic datasets
+    # args.acceptance = [0, 0, 1.0, 0] ## Preferred acceptance: Type III Only
+    # # Generate Trajectories First. 'python -m trajnetdataset.controlled_data' 
+    # write(controlled(sc, 'data/raw/controlled/orca_circle_crossing_10ped_.txt'),
+    #       'output_pre/{split}/orca_circle_crossing_10ped.ndjson', args)
+    # categorize(sc, 'output_pre/{split}/orca_circle_crossing_10ped.ndjson', args)
 
 if __name__ == '__main__':
     main()

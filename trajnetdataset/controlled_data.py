@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import rvo2
 import socialforce
 
-def generate_circle_crossing(num_ped, sim=None, radius=4):
+def generate_circle_crossing(num_ped, sim=None, radius=4): ## 10 (TrajNet++)
     positions = []
     goals = []
     speed = []
@@ -26,8 +26,8 @@ def generate_circle_crossing(num_ped, sim=None, radius=4):
             py = radius * np.sin(angle) + py_noise
             collide = False
             for agent in agent_list:
-                ## min_dist ~ 2*human.radius + discomfort_dist
-                min_dist = 0.8 
+                ## min_dist ~ 2*human.radius + discomfort_dist ## 2 (TrajNet++)
+                min_dist = 0.8
                 if norm((px - agent[0], py - agent[1])) < min_dist or \
                         norm((px - agent[2], py - agent[3])) < min_dist:
                     collide = True
@@ -174,9 +174,10 @@ def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end
 
     ## Circle Crossing
     elif sim_scene == 'circle_crossing':
-        fps = 5
+        fps = 20
         sampling_rate = fps / 2.5
         sim = rvo2.PyRVOSimulator(1/fps, 10, 10, 5, 5, 0.3, 1)
+        # sim = rvo2.PyRVOSimulator(1/fps, 4, 10, 4, 5, 0.6, 1.5) ## (TrajNet++)
         trajectories, _, goals, speed = generate_circle_crossing(num_ped, sim)
 
     ## Square Crossing
@@ -305,10 +306,10 @@ def viz(trajectories):
         trajectory = np.array(trajectories[i])
         plt.plot(trajectory[:, 0], trajectory[:, 1])
 
-    # plt.xlim(-15, 15)
-    # plt.ylim(-15, 15)
     plt.xlim(-5, 5)
     plt.ylim(-5, 5)
+    # plt.xlim(-15, 15) ## TrajNet++
+    # plt.ylim(-15, 15) ## TrajNet++
     plt.show()
     plt.close()
 
@@ -371,6 +372,7 @@ def main():
     last_frame = -5
 
     for i in range(num_scenes):
+        # num_ped = random.choice([5, 6, 7, 8]) ## TrajNet++
         ## Print every 10th scene
         if (i+1) % 10 == 0:
             print(i)
@@ -399,55 +401,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-## SF Groundtruth
-# s = socialforce.Simulator(initial_state, delta_t=0.1)
-# states = np.stack([s.step().state.copy() for _ in range(500)])
-
-# for t in range(states.shape[1]):
-#     trajectory = np.array(states[:, t])
-#     plt.scatter(trajectory[:, 0], trajectory[:, 1])
-
-# plt.xlim(-5, 5)
-# plt.ylim(-5, 5)
-# plt.show()
-# plt.close()
-
-
-        # generate_sf_trajectory(num_ped=num_ped)
-        # # ##Write the Scene to Txt (for collision)
-        # if not args.test:
-        #     last_frame = write_to_txt(trajectories, 'data/raw/controlled/'
-        #                               + 'circle_crossing.txt',
-        #                               count=count, frame=last_frame+5)
-        # else:
-        #     last_frame = write_to_txt(trajectories, 'data/raw/controlled/test_'
-        #                               + args.simulator + '_traj_'
-        #                               + args.simulation_type + '.txt',
-        #                               count=count, frame=last_frame+5)
-
-        # viz(trajectories)
-        # print("Count: ", count)
-        # ##Write the Scene to Txt (for collision)
-        # if not args.test:
-        #     last_frame = write_to_txt(trajectories, 'data/raw/controlled/'
-        #                               + args.simulator + '_traj_'
-        #                               + args.simulation_type + '.txt',
-        #                               count=count, frame=last_frame+5)
-        # else:
-        #     last_frame = write_to_txt(trajectories, 'data/raw/controlled/test_'
-        #                               + args.simulator + '_traj_'
-        #                               + args.simulation_type + '.txt',
-        #                               count=count, frame=last_frame+5)
-
-        # ##Write the Scene to Txt (for Circle)
-        # if not args.test:
-        #     last_frame = write_to_txt(trajectories, 'data/raw/controlled/circle_'
-        #                               + args.simulator + '_traj_'
-        #                               + str(num_ped) + '.txt',
-        #                               count=count, frame=last_frame+5)
-        # else:
-        #     last_frame = write_to_txt(trajectories, 'data/raw/controlled/circle_test_'
-        #                               + args.simulator + '_traj_'
-        #                               + args.simulation_type + '.txt',
-        #                               count=count, frame=last_frame+5)
