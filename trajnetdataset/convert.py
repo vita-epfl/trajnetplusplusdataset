@@ -107,7 +107,7 @@ def write(input_rows, output_file, args):
                         key=lambda frame: frame % 100000)
     else:
         frames = sorted(set(input_rows.map(lambda r: r.frame).toLocalIterator()))
-    
+
     # split
     train_split_index = int(len(frames) * args.train_fraction)
     val_split_index = train_split_index + int(len(frames) * args.val_fraction)
@@ -170,7 +170,7 @@ def categorize(sc, input_file, args):
                                      fps=args.fps, track_id=train_id, args=args)
         else:
             val_id = train_id
-            
+
         #Test
         test_rows = get_trackrows(sc, input_file.replace('split', '').format('test_private'))
         _ = trajectory_type(test_rows, input_file.replace('split', '').format('test_private'),
@@ -187,7 +187,7 @@ def main():
     parser.add_argument('--val_fraction', default=0.2, type=float,
                         help='Validation set fraction')
     parser.add_argument('--fps', default=2.5, type=float,
-                        help='fps')    
+                        help='fps')
     parser.add_argument('--order_frames', action='store_true',
                         help='For CFF')
     parser.add_argument('--chunk_stride', type=int, default=2,
@@ -195,7 +195,7 @@ def main():
     parser.add_argument('--min_length', default=0.0, type=float,
                         help='Min Length of Primary Trajectory')
 
-    ## For Trajectory categorizing and filtering 
+    ## For Trajectory categorizing and filtering
     categorizers = parser.add_argument_group('categorizers')
     categorizers.add_argument('--static_threshold', type=float, default=1.0,
                               help='Type I static threshold')
@@ -206,9 +206,9 @@ def main():
     categorizers.add_argument('--inter_pos_range', type=float, default=15,
                               help='Type IIId angle threshold for cone (degrees)')
     categorizers.add_argument('--grp_dist_thresh', type=float, default=0.8,
-                              help='Type IIIc distance threshold for group')    
+                              help='Type IIIc distance threshold for group')
     categorizers.add_argument('--grp_std_thresh', type=float, default=0.2,
-                              help='Type IIIc std deviation for group')   
+                              help='Type IIIc std deviation for group')
     categorizers.add_argument('--acceptance', nargs='+', type=float, default=[0.1, 1, 1, 1],
                               help='acceptance ratio of different trajectory (I, II, III, IV) types')
 
@@ -256,7 +256,7 @@ def main():
 
     # # Synthetic datasets
     # args.acceptance = [0, 0, 1.0, 0] ## Preferred acceptance: Type III Only
-    # # Generate Trajectories First. 'python -m trajnetdataset.controlled_data' 
+    # # Generate Trajectories First. 'python -m trajnetdataset.controlled_data'
     # write(controlled(sc, 'data/raw/controlled/orca_circle_crossing_10ped_.txt'),
     #       'output_pre/{split}/orca_circle_crossing_10ped.ndjson', args)
     # categorize(sc, 'output_pre/{split}/orca_circle_crossing_10ped.ndjson', args)

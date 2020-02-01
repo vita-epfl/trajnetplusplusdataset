@@ -12,11 +12,11 @@ class Scenes(object):
         self.chunk_size = args.obs_len + args.pred_len
         self.chunk_stride = args.chunk_stride
         self.obs_len = args.obs_len
-        # self.visible_chunk = args.obs_len
+        self.visible_chunk = None
         self.frames = set()
         self.fps = fps
         self.min_length = args.min_length
-        
+
     @staticmethod
     def euclidean_distance_2(row1, row2):
         """Euclidean distance squared between two rows."""
@@ -106,7 +106,7 @@ class Scenes(object):
         if '/test/' in output_file:
             print('Output File: ', output_file)
             self.visible_chunk = self.obs_len
-        else: 
+        else:
             self.visible_chunk = None
         scenes = self.from_rows(rows)
         tracks = rows.filter(lambda r: r.frame in self.frames)

@@ -10,18 +10,20 @@ import matplotlib.pyplot as plt
 
 import rvo2
 import socialforce
+from socialforce.potentials import PedPedPotential
+from socialforce.fieldofview import FieldOfView
 
 def generate_circle_crossing(num_ped, sim=None, radius=4): ## 10 (TrajNet++)
     positions = []
     goals = []
     speed = []
     agent_list = []
-    for i in range(num_ped):
+    for _ in range(num_ped):
         while True:
-            angle = np.random.random() * np.pi * 2
+            angle = random.uniform(0, 1) * np.pi * 2
             # add some noise to simulate all the possible cases robot could meet with human
-            px_noise = (np.random.random() - 0.5)  ## human.v_pref
-            py_noise = (np.random.random() - 0.5)  ## human.v_pref
+            px_noise = (random.uniform(0, 1) - 0.5)  ## human.v_pref
+            py_noise = (random.uniform(0, 1) - 0.5)  ## human.v_pref
             px = radius * np.cos(angle) + px_noise
             py = radius * np.sin(angle) + py_noise
             collide = False
@@ -37,11 +39,11 @@ def generate_circle_crossing(num_ped, sim=None, radius=4): ## 10 (TrajNet++)
 
         positions.append((px, py))
         goals.append((-px, -py))
-        if sim is not None: 
+        if sim is not None:
             sim.addAgent((px, py))
         velocity = np.array([-2 * px, -2 * py])
         magnitude = np.linalg.norm(velocity)
-        init_vel = 1 * velocity / magnitude if magnitude > 1 else velocit
+        init_vel = 1 * velocity / magnitude if magnitude > 1 else velocity
         speed.append([init_vel[0], init_vel[1]])
         agent_list.append([px, py, -px, -py])
     trajectories = [[positions[i]] for i in range(num_ped)]
@@ -53,15 +55,15 @@ def generate_square_crossing(num_ped, sim=None, square_width=4):
     speed = []
     agent_list = []
 
-    for i in range(num_ped):
-        if np.random.random() > 0.5:
+    for _ in range(num_ped):
+        if random.uniform(0, 1) > 0.5:
             sign = -1
         else:
             sign = 1
         min_dist = 0.8
         while True:
-            px = np.random.random() * square_width * 0.5 * sign
-            py = (np.random.random() - 0.5) * square_width
+            px = random.uniform(0, 1) * square_width * 0.5 * sign
+            py = (random.uniform(0, 1) - 0.5) * square_width
             collide = False
             for agent in agent_list:
                 if norm((px - agent[0], py - agent[1])) < min_dist:
@@ -70,8 +72,8 @@ def generate_square_crossing(num_ped, sim=None, square_width=4):
             if not collide:
                 break
         while True:
-            gx = np.random.random() * square_width * 0.5 * -sign
-            gy = (np.random.random() - 0.5) * square_width
+            gx = random.uniform(0, 1) * square_width * 0.5 * -sign
+            gy = (random.uniform(0, 1) - 0.5) * square_width
             collide = False
             for agent in agent_list:
                 if norm((gx - agent[2], gy - agent[3])) < min_dist:
@@ -82,13 +84,13 @@ def generate_square_crossing(num_ped, sim=None, square_width=4):
 
         positions.append((px, py))
         goals.append((gx, gy))
-        if sim is not None: 
-            sim.addAgent((px, py))        
+        if sim is not None:
+            sim.addAgent((px, py))
         velocity = np.array([gx - px, gy - py])
         magnitude = np.linalg.norm(velocity)
         init_vel = 1 * velocity / magnitude if magnitude > 1 else velocity
         speed.append([init_vel[0], init_vel[1]])
-        
+
         agent_list.append([px, py, gx, gy])
 
     trajectories = [[positions[i]] for i in range(num_ped)]
@@ -124,7 +126,7 @@ def overfit_initialize(num_ped, sim=None):
     trajectories = [[positions[i]] for i in range(num_ped)]
     return trajectories, positions, goals, speed
 
-def overfit_initialize_circle(num_ped, sim=None, center=(0,0), radius=10):
+def overfit_initialize_circle(num_ped, sim=None, center=(0, 0), radius=10):
     positions = []
     goals = []
     speed = []
@@ -147,9 +149,9 @@ def overfit_initialize_circle(num_ped, sim=None, center=(0,0), radius=10):
         # vx = 0
         # vy = 0
         # speed.append((vx, vy))
-        
+
         ## v2.0
-        velocity = np.array([gx - px, gy - py])
+        velocity = np.array([gx - px, gy_ - py_])
         magnitude = np.linalg.norm(velocity)
         init_vel = 1 * velocity / magnitude if magnitude > 1 else velocity
         speed.append([init_vel[0], init_vel[1]])
@@ -232,31 +234,34 @@ def generate_sf_trajectory(sim_scene, num_ped, sf_params=[0.5, 2.1, 0.3], end_ra
 
     ##Initiliaze simulators & scenes
     if sim_scene == 'two_ped':
-        trajectories, _, goals, speed = overfit_initialize(num_ped, sim)
+        trajectories, positions, goals, speed = overfit_initialize(num_ped)
 
     ## Circle Overfit
     elif sim_scene == 'circle_overfit':
-        trajectories, _, goals, speed = overfit_initialize_circle(num_ped, sim)
+        trajectories, positions, goals, speed = overfit_initialize_circle(num_ped)
 
     ## Circle Crossing
     elif sim_scene == 'circle_crossing':
         fps = 10
         sampling_rate = fps / 2.5
-        trajectories, _, goals, speed = generate_circle_crossing(num_ped, sim)
+        trajectories, positions, goals, speed = generate_circle_crossing(num_ped)
 
     ## Square Crossing
     elif sim_scene == 'square_crossing':
         fps = 10
         sampling_rate = fps / 2.5
-        trajectories, _, goals, speed = generate_square_crossing(num_ped, sim)
+        trajectories, positions, goals, speed = generate_square_crossing(num_ped)
 
     else:
         raise NotImplementedError
 
     initial_state = np.array([[positions[i][0], positions[i][1], speed[i][0], speed[i][1],
                                goals[i][0], goals[i][1]] for i in range(num_ped)])
-    s = socialforce.Simulator(initial_state, delta_t=1./fps, tau=sf_params[0], 
-                              v0=sf_params[1], sigma=sf_params[2])
+
+    ped_ped = PedPedPotential(1./fps, v0=sf_params[1], sigma=sf_params[2])
+    field_of_view = FieldOfView()
+    s = socialforce.Simulator(initial_state, ped_ped=ped_ped, field_of_view=field_of_view,
+                              delta_t=1./fps, tau=sf_params[0])
 
     # run
     reaching_goal = [False] * num_ped
@@ -318,7 +323,7 @@ def main():
     parser.add_argument('--simulator', default='orca',
                         choices=('orca', 'social_force'))
     parser.add_argument('--simulation_scene', default='circle_crossing',
-                        choices=('circle_crossing', 'square_crossing', 
+                        choices=('circle_crossing', 'square_crossing',
                                  'circle_overfit', 'two_ped'))
     parser.add_argument('--style', required=False, default=None)
     parser.add_argument('--num_ped', type=int, default=10,
@@ -364,7 +369,7 @@ def main():
                   + args.simulator + '_' \
                   + args.simulation_scene + '_' \
                   + str(num_ped) + 'ped_' \
-                  + args.style + '.txt' 
+                  + args.style + '.txt'
     print(output_file)
 
 

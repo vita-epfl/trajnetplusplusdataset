@@ -1,8 +1,9 @@
 """ Categorization of Primary Pedestrian """
 
-import trajnettools
 import numpy as np
 import pysparkling
+
+import trajnettools
 from trajnettools.kalman import predict as kalman_predict
 from trajnettools.interactions import check_interaction, group
 from trajnettools.interactions import get_interaction_type
@@ -62,7 +63,7 @@ def get_type(scene, args):
 
     # Interaction Types
     if mult_tag[0] == 3:
-        sub_tag = get_interaction_type(scene_xy, args.inter_pos_range, 
+        sub_tag = get_interaction_type(scene_xy, args.inter_pos_range,
                                        args.inter_dist_thresh, args.obs_len)
     else:
         sub_tag = []
@@ -114,7 +115,7 @@ def trajectory_type(rows, path, fps, track_id=0, args=None):
     tags = {1: [], 2: [], 3: [], 4: []}
     mult_tags = {1: [], 2: [], 3: [], 4: []}
     sub_tags = {1: [], 2: [], 3: [], 4: []}
-    col_count = 0
+    # col_count = 0
 
     if not scenes:
         raise Exception('No scenes found')
