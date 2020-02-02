@@ -11,7 +11,7 @@ Install
 Prepare Data
 ------------
 
-Existing data:
+Existing real world data:
 
 .. code-block::
 
@@ -65,6 +65,15 @@ Extract:
     mkdir -p data/raw/edinburgh
     wget -i edinburgh_informatics_forum_urls.txt -P data/raw/edinburgh/
 
+Prepare synthetic data:
+
+.. code-block:: sh
+
+    python -m trajnetdataset.controlled_data
+
+Help menu for generating diverse synthetic data:
+``python -m trajnetdataset.controlled_data --help``
+
 Run
 ---
 
@@ -75,6 +84,11 @@ Run
     # create plots to check new dataset
     python -m trajnettools.summarize output/train/*.ndjson
 
+    # obtain new dataset statistics
+    python -m trajnettools.dataset_stats output/train/*.ndjson
+
+    # visualize sample scenes
+    python -m trajnettools.trajectories output/train/*.ndjson
 
 Difference in generated data
 ----------------------------
