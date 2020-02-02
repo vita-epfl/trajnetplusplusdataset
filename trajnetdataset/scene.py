@@ -7,14 +7,15 @@ from trajnettools import SceneRow
 
 
 class Scenes(object):
-    def __init__(self, fps, start_scene_id=0, chunk_size=21, chunk_stride=3, visible_chunk=None, min_length=0.2):
+    def __init__(self, fps, start_scene_id=0, args=None):
         self.scene_id = start_scene_id
-        self.chunk_size = chunk_size
-        self.chunk_stride = chunk_stride
-        self.visible_chunk = visible_chunk
+        self.chunk_size = args.obs_len + args.pred_len
+        self.chunk_stride = args.chunk_stride
+        self.obs_len = args.obs_len
+        self.visible_chunk = None
         self.frames = set()
         self.fps = fps
-        self.min_length = min_length
+        self.min_length = args.min_length
 
     @staticmethod
     def euclidean_distance_2(row1, row2):
@@ -22,7 +23,7 @@ class Scenes(object):
         return (row1.x - row2.x)**2 + (row1.y - row2.y)**2
 
     @staticmethod
-    def close_pedestrians(rows, cell_size=5):
+    def close_pedestrians(rows, cell_size=10):
         """Fast computation of spatially close pedestrians.
 
         By frame, get the list of pedestrian ids that or close to other
@@ -102,6 +103,11 @@ class Scenes(object):
 
 
     def rows_to_file(self, rows, output_file):
+        if '/test/' in output_file:
+            print('Output File: ', output_file)
+            self.visible_chunk = self.obs_len
+        else:
+            self.visible_chunk = None
         scenes = self.from_rows(rows)
         tracks = rows.filter(lambda r: r.frame in self.frames)
         all_data = rows.context.union((scenes, tracks))

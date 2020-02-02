@@ -19,8 +19,15 @@ def biwi(line):
 
 
 def crowds_interpolate_person(ped_id, person_xyf):
-    xs = np.array([x for x, _, _ in person_xyf]) / 720 * 12  # TODO
-    ys = np.array([y for _, y, _ in person_xyf]) / 576 * 12
+    ## Earlier
+    # xs = np.array([x for x, _, _ in person_xyf]) / 720 * 12 # 0.0167
+    # ys = np.array([y for _, y, _ in person_xyf]) / 576 * 12 # 0.0208
+
+    ## Pixel-to-meter scale conversion according to
+    ## https://github.com/agrimgupta92/sgan/issues/5
+    xs = np.array([x for x, _, _ in person_xyf]) * 0.0210
+    ys = np.array([y for _, y, _ in person_xyf]) * 0.0239
+
     fs = np.array([f for _, _, f in person_xyf])
 
     kind = 'linear'
@@ -273,4 +280,3 @@ def get_trackrows(line):
         return TrackRow(track['f'], track['p'], track['x'], track['y'],
                         track.get('prediction_number'))
     return None
-                    
