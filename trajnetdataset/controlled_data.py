@@ -13,11 +13,13 @@ import socialforce
 from socialforce.potentials import PedPedPotential
 from socialforce.fieldofview import FieldOfView
 
-def generate_circle_crossing(num_ped, sim=None, radius=4): ## 10 (TrajNet++)
+def generate_circle_crossing(num_ped, sim=None, radius=4, mode=None): 
     positions = []
     goals = []
     speed = []
     agent_list = []
+    if mode == 'trajnet':
+        radius = 10 ## 10 (TrajNet++)
     for _ in range(num_ped):
         while True:
             angle = random.uniform(0, 1) * np.pi * 2
@@ -28,8 +30,9 @@ def generate_circle_crossing(num_ped, sim=None, radius=4): ## 10 (TrajNet++)
             py = radius * np.sin(angle) + py_noise
             collide = False
             for agent in agent_list:
-                ## min_dist ~ 2*human.radius + discomfort_dist ## 2 (TrajNet++)
                 min_dist = 0.8
+                if mode == 'trajnet':
+                    min_dist = 2    ## min_dist ~ 2*human.radius + discomfort_dist ## 2 (TrajNet++)
                 if norm((px - agent[0], py - agent[1])) < min_dist or \
                         norm((px - agent[2], py - agent[3])) < min_dist:
                     collide = True
@@ -159,7 +162,7 @@ def overfit_initialize_circle(num_ped, sim=None, center=(0, 0), radius=10):
     trajectories = [[positions[i]] for i in range(num_ped)]
     return trajectories, positions, goals, speed
 
-def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end_range=1.0):
+def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end_range=1.0, mode=None):
     """ Simulating Scenario using ORCA """
     ## Default: (1 / 60., 1.5, 5, 1.5, 2, 0.4, 2)
     sampling_rate = 1
@@ -179,8 +182,9 @@ def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end
         fps = 20
         sampling_rate = fps / 2.5
         sim = rvo2.PyRVOSimulator(1/fps, 10, 10, 5, 5, 0.3, 1)
-        # sim = rvo2.PyRVOSimulator(1/fps, 4, 10, 4, 5, 0.6, 1.5) ## (TrajNet++)
-        trajectories, _, goals, speed = generate_circle_crossing(num_ped, sim)
+        if mode == 'trajnet':
+            sim = rvo2.PyRVOSimulator(1/fps, 4, 10, 4, 5, 0.6, 1.5) ## (TrajNet++)
+        trajectories, _, goals, speed = generate_circle_crossing(num_ped, sim, mode=mode)
 
     ## Square Crossing
     elif sim_scene == 'square_crossing':
@@ -305,7 +309,7 @@ def write_to_txt(trajectories, path, count, frame):
 
     return last_frame
 
-def viz(trajectories):
+def viz(trajectories, mode=None):
     """ Visualize Trajectories """
     for i, _ in enumerate(trajectories):
         trajectory = np.array(trajectories[i])
@@ -313,8 +317,9 @@ def viz(trajectories):
 
     plt.xlim(-5, 5)
     plt.ylim(-5, 5)
-    # plt.xlim(-15, 15) ## TrajNet++
-    # plt.ylim(-15, 15) ## TrajNet++
+    if mode == 'trajnet':
+        plt.xlim(-15, 15) ## TrajNet++
+        plt.ylim(-15, 15) ## TrajNet++
     plt.show()
     plt.close()
 
@@ -331,12 +336,15 @@ def main():
     parser.add_argument('--num_scenes', type=int, default=100,
                         help='Number of scenes')
     parser.add_argument('--test', default=False)
+    parser.add_argument('--mode', default=None,
+                        help='Keep trajnet for trajnet dataset generation')
 
     args = parser.parse_args()
 
     ##Decide the number of scenes & agents per scene
     num_scenes = args.num_scenes
     num_ped = args.num_ped
+    mode = args.mode
 
     if args.simulation_scene == 'two_ped':
         num_ped = 2
@@ -369,6 +377,7 @@ def main():
                   + args.simulator + '_' \
                   + args.simulation_scene + '_' \
                   + str(num_ped) + 'ped_' \
+                  + str(num_scenes) + 'scenes_' \
                   + args.style + '.txt'
     print(output_file)
 
@@ -377,7 +386,8 @@ def main():
     last_frame = -5
 
     for i in range(num_scenes):
-        # num_ped = random.choice([5, 6, 7, 8]) ## TrajNet++
+        if mode == 'trajnet':
+            num_ped = random.choice([5, 6, 7, 8]) ## TrajNet++
         ## Print every 10th scene
         if (i+1) % 10 == 0:
             print(i)
@@ -387,7 +397,8 @@ def main():
             trajectories, _ = generate_orca_trajectory(sim_scene=args.simulation_scene,
                                                        num_ped=num_ped,
                                                        min_dist=min_dist,
-                                                       react_time=react_time)
+                                                       react_time=react_time,
+                                                       mode=mode)
         elif args.simulator == 'social_force':
             trajectories, _ = generate_sf_trajectory(sim_scene=args.simulation_scene,
                                                      num_ped=num_ped,
@@ -396,7 +407,7 @@ def main():
             raise NotImplementedError
 
         ## Visualizing scenes
-        # viz(trajectories)
+        # viz(trajectories, mode=mode)
 
         ## Write
         last_frame = write_to_txt(trajectories, output_file,

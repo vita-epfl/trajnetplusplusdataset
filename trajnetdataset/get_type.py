@@ -98,6 +98,7 @@ def trajectory_type(rows, path, fps, track_id=0, args=None):
     new_frames = set()
     new_scenes = []
 
+    start_frames = set()
     ###########################################################################
     # scenes_test helps to handle both test and test_private simultaneously
     # scenes_test correspond to Test
@@ -121,8 +122,13 @@ def trajectory_type(rows, path, fps, track_id=0, args=None):
         raise Exception('No scenes found')
 
     for index, scene in enumerate(scenes):
+
         ## Primary Path
         ped_interest = scene[0]
+
+        if ped_interest[0].frame in start_frames:
+            # print("Got common start")
+            continue
 
         # Assert Test Scene length
         if test:
@@ -152,6 +158,8 @@ def trajectory_type(rows, path, fps, track_id=0, args=None):
             scene_tag.append(sub_tag)
 
             ## Filtered scenes and Frames
+            start_frames |= set(ped_interest[i].frame for i in range(len(ped_interest[0:1])))
+            # print(start_frames)
             new_frames |= set(ped_interest[i].frame for i in range(len(ped_interest)))
             new_scenes.append(
                 trajnettools.data.SceneRow(track_id, ped_interest[0].pedestrian,
