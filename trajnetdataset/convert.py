@@ -7,6 +7,9 @@ from . import readers
 from .scene import Scenes
 from .get_type import trajectory_type
 
+import warnings
+warnings.filterwarnings("ignore")
+
 def biwi(sc, input_file):
     print('processing ' + input_file)
     return (sc
