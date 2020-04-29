@@ -3,6 +3,7 @@
 import random
 import argparse
 import os
+import itertools
 
 import numpy as np
 from numpy.linalg import norm
@@ -179,7 +180,7 @@ def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end
 
     ## Circle Crossing
     elif sim_scene == 'circle_crossing':
-        fps = 20
+        fps = 60
         sampling_rate = fps / 2.5
         sim = rvo2.PyRVOSimulator(1/fps, 10, 10, 5, 5, 0.3, 1)
         if mode == 'trajnet':
@@ -200,6 +201,7 @@ def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end
     done = False
     reaching_goal_by_ped = [False] * num_ped
     count = 0
+    valid = True
 
     ##Simulate a scene
     while not done and count < 6000:
@@ -229,7 +231,10 @@ def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end
         count += 1
         done = all(reaching_goal)
 
-    return trajectories, count
+    if not done or not are_smoothes(trajectories):
+        valid = False
+
+    return trajectories, valid
 
 def generate_sf_trajectory(sim_scene, num_ped, sf_params=[0.5, 2.1, 0.3], end_range=0.2):
     """ Simulating Scenario using SF """
@@ -287,6 +292,55 @@ def generate_sf_trajectory(sim_scene, num_ped, sf_params=[0.5, 2.1, 0.3], end_ra
         done = all(reaching_goal)
 
     return trajectories, count
+
+
+def getAngle(a, b, c):
+    """
+    Return angle formed by 3 points
+    """
+    ba = a - b
+    bc = c - b
+    cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+    angle = np.arccos(cosine_angle)
+    return angle
+
+def are_smoothes(trajectories):
+    """
+    Check if there is no sharp turns in the trajectories
+    """
+    is_smooth = True
+    for i, _ in enumerate(trajectories):
+        trajectory = np.array(trajectories[i])
+        for j in range(0, len(trajectory[:, 0]) - 3):
+            p1 = np.array([trajectory[j, 0], trajectory[j, 1]])
+            p2 = np.array([trajectory[j+1, 0], trajectory[j+1, 1]])
+            p3 = np.array([trajectory[j+2, 0], trajectory[j+2, 1]])
+
+            angle = getAngle(p1, p2, p3)
+            if angle <= np.pi / 2:
+                is_smooth = False
+                # plt.scatter(p1[0], p1[1], color='red', marker='X')
+    return is_smooth
+
+def find_collisions(trajectories, max_steps):
+    """
+    Look for collisions in the trajectories
+    """
+    for timestep in range(max_steps):
+        positions = []
+        for ped, _ in enumerate(trajectories):
+            traj = np.array(trajectories[ped])
+            if timestep < len(traj):
+                positions.append(traj[timestep])
+
+        # Check if distance between 2 points is smaller than 0.1m
+        # If yes -> collision detected
+        for combi in itertools.combinations(positions, 2):
+            distance = (np.linalg.norm(combi[0]-combi[1]))
+            if distance < 0.2:
+                return True
+
+    return False
 
 def write_to_txt(trajectories, path, count, frame):
     """ Write Trajectories to the text file """
@@ -394,24 +448,27 @@ def main():
 
         ##Generate scenes
         if args.simulator == 'orca':
-            trajectories, _ = generate_orca_trajectory(sim_scene=args.simulation_scene,
+            trajectories, valid = generate_orca_trajectory(sim_scene=args.simulation_scene,
                                                        num_ped=num_ped,
                                                        min_dist=min_dist,
                                                        react_time=react_time,
                                                        mode=mode)
         elif args.simulator == 'social_force':
-            trajectories, _ = generate_sf_trajectory(sim_scene=args.simulation_scene,
+            trajectories, valid = generate_sf_trajectory(sim_scene=args.simulation_scene,
                                                      num_ped=num_ped,
                                                      sf_params=[0.5, 1.0, 0.1])
         else:
             raise NotImplementedError
 
         ## Visualizing scenes
-        # viz(trajectories, mode=mode)
+        # print("VALID : ", valid)
+        if not valid:
+            viz(trajectories, mode=mode)
 
         ## Write
-        last_frame = write_to_txt(trajectories, output_file,
-                                  count=count, frame=last_frame+5)
+        if valid:
+            last_frame = write_to_txt(trajectories, output_file,
+                                      count=count, frame=last_frame+5)
 
         count += num_ped
 
