@@ -10,6 +10,7 @@ from numpy.linalg import norm
 import matplotlib.pyplot as plt
 
 import rvo2
+import pickle
 import socialforce
 from socialforce.potentials import PedPedPotential
 from socialforce.fieldofview import FieldOfView
@@ -180,7 +181,7 @@ def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end
 
     ## Circle Crossing
     elif sim_scene == 'circle_crossing':
-        fps = 60
+        fps = 100
         sampling_rate = fps / 2.5
         sim = rvo2.PyRVOSimulator(1/fps, 10, 10, 5, 5, 0.3, 1)
         if mode == 'trajnet':
@@ -202,13 +203,13 @@ def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end
     reaching_goal_by_ped = [False] * num_ped
     count = 0
     valid = True
-
     ##Simulate a scene
     while not done and count < 6000:
+        count += 1
         sim.doStep()
         reaching_goal = []
         for i in range(num_ped):
-            if count == 0:
+            if count == 1:
                 trajectories[i].pop(0)
             position = sim.getAgentPosition(i)
 
@@ -228,13 +229,12 @@ def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end
                 speed = np.linalg.norm(velocity)
                 pref_vel = 1 * velocity / speed if speed > 1 else velocity
                 sim.setAgentPrefVelocity(i, tuple(pref_vel.tolist()))
-        count += 1
         done = all(reaching_goal)
 
     if not done or not are_smoothes(trajectories):
         valid = False
 
-    return trajectories, valid
+    return trajectories, valid, goals
 
 def generate_sf_trajectory(sim_scene, num_ped, sf_params=[0.5, 2.1, 0.3], end_range=0.2):
     """ Simulating Scenario using SF """
@@ -342,7 +342,7 @@ def find_collisions(trajectories, max_steps):
 
     return False
 
-def write_to_txt(trajectories, path, count, frame):
+def write_to_txt(trajectories, path, count, frame, dict_dest=None, goals=None):
     """ Write Trajectories to the text file """
 
     last_frame = 0
@@ -354,8 +354,11 @@ def write_to_txt(trajectories, path, count, frame):
                 track_data.append('{}, {}, {}, {}'.format(t+frame, count+i,
                                                           trajectories[i][t][0],
                                                           trajectories[i][t][1]))
+
                 if t == len(trajectories[i])-1 and t+frame > last_frame:
                     last_frame = t+frame
+            if goals:
+                dict_dest[count+i] = goals[i]
 
         for track in track_data:
             fo.write(track)
@@ -376,6 +379,104 @@ def viz(trajectories, mode=None):
         plt.ylim(-15, 15) ## TrajNet++
     plt.show()
     plt.close()
+
+def predict_all(input_paths, goals, n_predict=12):
+
+    pred_length = n_predict
+
+    fps = 100
+    sampling_rate = fps / 2.5
+
+    sim = rvo2.PyRVOSimulator(1/fps, 4, 10, 4, 5, 0.6, 1.5) ## (TrajNet++)
+    trajectories = [[input_paths[i][-1]] for i, _ in enumerate(input_paths)]
+    [sim.addAgent((p[-1][0],p[-1][1])) for p in input_paths]
+
+    num_ped = len(trajectories)
+    reaching_goal_by_ped = [False] * num_ped
+    count = 0
+    end_range = 1.0
+    done = False
+
+    for i in range(num_ped):
+        velocity = np.array((input_paths[i][-1][0] - input_paths[i][-3][0], input_paths[i][-1][1] - input_paths[i][-3][1]))
+        velocity = velocity/0.8
+        sim.setAgentVelocity(i, tuple(velocity.tolist()))
+
+        velocity = np.array((goals[i][0] - input_paths[i][-1][0], goals[i][1] - input_paths[i][-1][1]))
+        speed = np.linalg.norm(velocity)
+        pref_vel = 1 * velocity / speed if speed > 1 else velocity
+        sim.setAgentPrefVelocity(i, tuple(pref_vel.tolist()))
+
+    ##Simulate a scene
+    while (not done) and count < sampling_rate * pred_length + 1:
+        # print("Count: ", count)
+        count += 1
+        sim.doStep()
+        reaching_goal = []
+        for i in range(num_ped):
+            if count == 1:
+                trajectories[i].pop(0)
+            position = sim.getAgentPosition(i)
+
+            ## Append only if Goal not reached
+            if not reaching_goal_by_ped[i]:
+                if count % sampling_rate == 0:
+                    trajectories[i].append(position)
+
+            # check if this agent reaches the goal
+            if np.linalg.norm(np.array(position) - np.array(goals[i])) < end_range:
+                reaching_goal.append(True)
+                sim.setAgentPrefVelocity(i, (0, 0))
+                reaching_goal_by_ped[i] = True
+            else:
+                reaching_goal.append(False)
+                velocity = np.array((goals[i][0] - position[0], goals[i][1] - position[1]))
+                speed = np.linalg.norm(velocity)
+                pref_vel = 1 * velocity / speed if speed > 1 else velocity
+                sim.setAgentPrefVelocity(i, tuple(pref_vel.tolist()))
+
+        done = all(reaching_goal)
+
+    return trajectories
+
+def viz2(trajectories, trajectories_pred_scenes, mode=None):
+    """ Visualize Trajectories """
+    plt.grid(linestyle='dotted')
+    for i, _ in enumerate(trajectories):
+        trajectory = np.array(trajectories[i])
+        if i == 0:
+            plt.plot(trajectory[:, 0], trajectory[:, 1], linestyle='solid',
+                     color='black', marker='o', markersize=1.0, zorder=1.9)
+        else:
+            plt.plot(trajectory[:, 0], trajectory[:, 1], linestyle='None',
+                     color='black', marker='o', markersize=1.0, zorder=0.9)
+
+    # import pdb
+    # pdb.set_trace()
+    # trajectory_re = np.array(trajectories_re)
+    for i, _ in enumerate(trajectories_pred_scenes):
+        trajectory_set = np.array(trajectories_pred_scenes[i])
+        for j, _ in enumerate(trajectory_set):
+            trajectory = trajectory_set[j]
+            plt.plot(trajectory[:, 0], trajectory[:, 1], linestyle='solid',
+                     color='blue', alpha=0.4, linewidth=2)
+
+    plt.xlim(-5, 5)
+    plt.ylim(-5, 5)
+    if mode == 'trajnet':
+        plt.xlim(-7, 7) ## TrajNet++
+        plt.ylim(-7, 7) ## TrajNet++
+    plt.show()
+    plt.close()
+
+def add_noise(observation):
+    ## Last Position Noise
+    # observation[0][-1] += np.random.uniform(0, 0.04, (2,))
+
+    ## Last Position Noise
+    thresh = 0.005
+    observation += np.random.uniform(-thresh, thresh, observation.shape)
+    return observation
 
 def main():
     parser = argparse.ArgumentParser()
@@ -439,38 +540,70 @@ def main():
     count = 0
     last_frame = -5
 
+    dict_dest = {}
+
     for i in range(num_scenes):
-        if mode == 'trajnet':
-            num_ped = random.choice([5, 6, 7, 8]) ## TrajNet++
+        # if mode == 'trajnet':
+        #     num_ped = random.choice([4, 5, 6]) ## TrajNet++
         ## Print every 10th scene
         if (i+1) % 10 == 0:
             print(i)
 
         ##Generate scenes
         if args.simulator == 'orca':
-            trajectories, valid = generate_orca_trajectory(sim_scene=args.simulation_scene,
-                                                       num_ped=num_ped,
-                                                       min_dist=min_dist,
-                                                       react_time=react_time,
-                                                       mode=mode)
+            trajectories, valid, goals = generate_orca_trajectory(sim_scene=args.simulation_scene,
+                                                                  num_ped=num_ped,
+                                                                  min_dist=min_dist,
+                                                                  react_time=react_time,
+                                                                  mode=mode)
+
+            observation = np.array([trajectory[10:15] for trajectory in trajectories])
+            observation = np.round(observation, 2)
+            goals = np.array(goals)
+            # goals = np.round(goals, 2)
+            trajectories_re_list = []
+            for k in range(20):
+                # print("K: ", k)
+                observation_re = add_noise(observation.copy())
+                trajectories_re = predict_all(observation_re, goals)
+                for m, _ in enumerate(trajectories_re):
+                    diff_ade =  np.mean(np.linalg.norm(np.array(trajectories[m][15:27]) - np.array(trajectories_re[m]), axis=1))
+                    diff_fde =  np.linalg.norm(np.array(trajectories[m][26]) - np.array(trajectories_re[m][-1]))
+                    if diff_ade > 0.11 or diff_fde > 0.2:
+                        print("INVALID", diff_ade, diff_fde)
+                trajectories_re_list.append(np.array(trajectories_re))
+            # import pdb
+            # pdb.set_trace()
+            viz2(trajectories, trajectories_re_list, mode=mode)
+
         elif args.simulator == 'social_force':
             trajectories, valid = generate_sf_trajectory(sim_scene=args.simulation_scene,
-                                                     num_ped=num_ped,
-                                                     sf_params=[0.5, 1.0, 0.1])
+                                                         num_ped=num_ped,
+                                                         sf_params=[0.5, 1.0, 0.1])
         else:
             raise NotImplementedError
 
         ## Visualizing scenes
-        # print("VALID : ", valid)
         if not valid:
+            print("VALIDITY")
             viz(trajectories, mode=mode)
 
-        ## Write
-        if valid:
-            last_frame = write_to_txt(trajectories, output_file,
-                                      count=count, frame=last_frame+5)
+    #     # ## Write
+    #     if valid:
+    #         last_frame = write_to_txt(trajectories, output_file,
+    #                                   count=count, frame=last_frame+5,
+    #                                   dict_dest=dict_dest,
+    #                                   goals=goals)
+    #     count += num_ped
 
-        count += num_ped
+    # print(dict_dest)
+    # ## Write Goal Dict
+    # with open('dest_new/' + args.simulator + '_' \
+    #               + args.simulation_scene + '_' \
+    #               + str(num_ped) + 'ped_' \
+    #               + str(num_scenes) + 'scenes_' \
+    #               + args.style + '.pkl', 'wb') as f:
+    #     pickle.dump(dict_dest, f)
 
 if __name__ == '__main__':
     main()
