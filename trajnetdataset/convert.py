@@ -96,7 +96,13 @@ def get_trackrows(sc, input_file):
             .filter(lambda r: r is not None)
             .cache())
 
-# def write(input_rows, output_file, train_fraction=0.6, val_fraction=0.2, fps=2.5, order_frames=False):
+def standard(sc, input_file):
+    print('processing ' + input_file)
+    return (sc
+            .textFile(input_file)
+            .map(readers.standard)
+            .cache())
+
 def write(input_rows, output_file, args):
     """ Write Valid Scenes without categorization """
 
@@ -140,41 +146,29 @@ def categorize(sc, input_file, args):
     """ Categorize the Scenes """
 
     print(" Entering Categorizing ")
+    test_fraction = 1 - args.train_fraction - args.val_fraction
 
-    # Decide which folders to categorize #
-    if args.train_fraction == 1.0:
-        #Train
-        print("Only train")
+    train_id = 0
+    if args.train_fraction:
+        print("Categorizing Training Set")
         train_rows = get_trackrows(sc, input_file.replace('split', '').format('train'))
         train_id = trajectory_type(train_rows, input_file.replace('split', '').format('train'),
                                    fps=args.fps, track_id=0, args=args)
 
-    elif (args.train_fraction + args.val_fraction) == 0.0:
-        #Test
-        print("Only test")
-        test_rows = get_trackrows(sc, input_file.replace('split', '').format('test_private'))
-        _ = trajectory_type(test_rows, input_file.replace('split', '').format('test_private'),
-                            fps=args.fps, track_id=0, args=args)
+    val_id = train_id
+    if args.val_fraction:
+        print("Categorizing Validation Set")
+        val_rows = get_trackrows(sc, input_file.replace('split', '').format('val'))
+        val_id = trajectory_type(val_rows, input_file.replace('split', '').format('val'),
+                                 fps=args.fps, track_id=train_id, args=args)
 
-    else:
-        print("All Three")
-        #Train
-        train_rows = get_trackrows(sc, input_file.replace('split', '').format('train'))
-        train_id = trajectory_type(train_rows, input_file.replace('split', '').format('train'),
-                                   fps=args.fps, track_id=0, args=args)
 
-        #Val
-        if args.val_fraction != 0:
-            val_rows = get_trackrows(sc, input_file.replace('split', '').format('val'))
-            val_id = trajectory_type(val_rows, input_file.replace('split', '').format('val'),
-                                     fps=args.fps, track_id=train_id, args=args)
-        else:
-            val_id = train_id
-
-        #Test
+    if test_fraction:
+        print("Categorizing Test Set")
         test_rows = get_trackrows(sc, input_file.replace('split', '').format('test_private'))
         _ = trajectory_type(test_rows, input_file.replace('split', '').format('test_private'),
                             fps=args.fps, track_id=val_id, args=args)
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -194,6 +188,8 @@ def main():
                         help='Sampling Stride')
     parser.add_argument('--min_length', default=0.0, type=float,
                         help='Min Length of Primary Trajectory')
+    parser.add_argument('--goal_file', required=True,
+                        help='Pkl file for goals')
 
     ## For Trajectory categorizing and filtering
     categorizers = parser.add_argument_group('categorizers')
