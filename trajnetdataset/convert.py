@@ -188,8 +188,8 @@ def main():
                         help='Sampling Stride')
     parser.add_argument('--min_length', default=0.0, type=float,
                         help='Min Length of Primary Trajectory')
-    parser.add_argument('--goal_file', required=True,
-                        help='Pkl file for goals')
+    parser.add_argument('--goal_file', default=None,
+                        help='Pkl file for goals (REQUIRED for ORCA)')
 
     ## For Trajectory categorizing and filtering
     categorizers = parser.add_argument_group('categorizers')
