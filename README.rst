@@ -82,13 +82,13 @@ Run
     python -m trajnetdataset.convert
 
     # create plots to check new dataset
-    python -m trajnettools.summarize output/train/*.ndjson
+    python -m trajnetplusplustools.summarize output/train/*.ndjson
 
     # obtain new dataset statistics
-    python -m trajnettools.dataset_stats output/train/*.ndjson
+    python -m trajnetplusplustools.dataset_stats output/train/*.ndjson
 
     # visualize sample scenes
-    python -m trajnettools.trajectories output/train/*.ndjson
+    python -m trajnetplusplustools.trajectories output/train/*.ndjson
 
 Difference in generated data
 ----------------------------
