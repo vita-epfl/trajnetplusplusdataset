@@ -100,8 +100,21 @@ Difference in generated data
 # * the primary pedestrian has to move by more than 1 meter
 * at one point, the primary pedestrian has to be <3m away from another pedestrian
 
-Citations
----------
+Citation
+========
+
+If you find this code useful in your research then please cite
+
+.. code-block::
+
+    @inproceedings{Kothari2020HumanTF,
+      title={Human Trajectory Forecasting in Crowds: A Deep Learning Perspective},
+      author={Parth Kothari and Sven Kreiss and Alexandre Alahi},
+      year={2020}
+    }
+
+References
+----------
 * ``eth``: 
 
 .. code-block::
