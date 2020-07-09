@@ -7,7 +7,7 @@ import xml.etree.ElementTree
 import numpy as np
 import scipy.interpolate
 
-from trajnettools import TrackRow
+from trajnetplusplustools import TrackRow
 
 
 def biwi(line):
@@ -16,7 +16,6 @@ def biwi(line):
                     int(float(line[1])),
                     float(line[2]),
                     float(line[4]))
-
 
 def crowds_interpolate_person(ped_id, person_xyf):
     ## Earlier
@@ -280,3 +279,10 @@ def get_trackrows(line):
         return TrackRow(track['f'], track['p'], track['x'], track['y'],
                         track.get('prediction_number'))
     return None
+
+def standard(line):
+    line = [e for e in line.split('\t') if e != '']
+    return TrackRow(int(float(line[0])),
+                    int(float(line[1])),
+                    float(line[2]),
+                    float(line[3]))

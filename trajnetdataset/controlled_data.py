@@ -3,21 +3,25 @@
 import random
 import argparse
 import os
+import itertools
 
 import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
 
 import rvo2
+import pickle
 import socialforce
 from socialforce.potentials import PedPedPotential
 from socialforce.fieldofview import FieldOfView
 
-def generate_circle_crossing(num_ped, sim=None, radius=4): ## 10 (TrajNet++)
+def generate_circle_crossing(num_ped, sim=None, radius=4, mode=None): 
     positions = []
     goals = []
     speed = []
     agent_list = []
+    if mode == 'trajnet':
+        radius = 10 ## 10 (TrajNet++)
     for _ in range(num_ped):
         while True:
             angle = random.uniform(0, 1) * np.pi * 2
@@ -28,8 +32,9 @@ def generate_circle_crossing(num_ped, sim=None, radius=4): ## 10 (TrajNet++)
             py = radius * np.sin(angle) + py_noise
             collide = False
             for agent in agent_list:
-                ## min_dist ~ 2*human.radius + discomfort_dist ## 2 (TrajNet++)
                 min_dist = 0.8
+                if mode == 'trajnet':
+                    min_dist = 2    ## min_dist ~ 2*human.radius + discomfort_dist ## 2 (TrajNet++)
                 if norm((px - agent[0], py - agent[1])) < min_dist or \
                         norm((px - agent[2], py - agent[3])) < min_dist:
                     collide = True
@@ -49,146 +54,19 @@ def generate_circle_crossing(num_ped, sim=None, radius=4): ## 10 (TrajNet++)
     trajectories = [[positions[i]] for i in range(num_ped)]
     return trajectories, positions, goals, speed
 
-def generate_square_crossing(num_ped, sim=None, square_width=4):
-    positions = []
-    goals = []
-    speed = []
-    agent_list = []
-
-    for _ in range(num_ped):
-        if random.uniform(0, 1) > 0.5:
-            sign = -1
-        else:
-            sign = 1
-        min_dist = 0.8
-        while True:
-            px = random.uniform(0, 1) * square_width * 0.5 * sign
-            py = (random.uniform(0, 1) - 0.5) * square_width
-            collide = False
-            for agent in agent_list:
-                if norm((px - agent[0], py - agent[1])) < min_dist:
-                    collide = True
-                    break
-            if not collide:
-                break
-        while True:
-            gx = random.uniform(0, 1) * square_width * 0.5 * -sign
-            gy = (random.uniform(0, 1) - 0.5) * square_width
-            collide = False
-            for agent in agent_list:
-                if norm((gx - agent[2], gy - agent[3])) < min_dist:
-                    collide = True
-                    break
-            if not collide:
-                break
-
-        positions.append((px, py))
-        goals.append((gx, gy))
-        if sim is not None:
-            sim.addAgent((px, py))
-        velocity = np.array([gx - px, gy - py])
-        magnitude = np.linalg.norm(velocity)
-        init_vel = 1 * velocity / magnitude if magnitude > 1 else velocity
-        speed.append([init_vel[0], init_vel[1]])
-
-        agent_list.append([px, py, gx, gy])
-
-    trajectories = [[positions[i]] for i in range(num_ped)]
-    return trajectories, positions, goals, speed
-
-def overfit_initialize(num_ped, sim=None):
-    """ Scenario initialization """
-
-    # initialize agents' starting and goal positions
-    x = np.linspace(-15, 15, 4)
-    positions = []
-    goals = []
-    speed = []
-    for i in range(4):
-        # random_number = random.uniform(-0.3, 0.3)
-        py = [-10, 10]
-        gy = [10, -10]
-        for j in range(2):
-            px = x[i] + np.random.normal(0, 0.3) * np.sign(j)
-            gx = x[i] + np.random.normal(0, 0.1) * np.sign(j)
-            py_ = py[j] + i * 16/9 * np.sign(j) + random.uniform(-0.5, 0.5)
-            gy_ = gy[j] + random.uniform(-0.5, 0.5)
-            positions.append((px, py_))
-            goals.append((gx, gy_))
-            if sim is not None:
-                sim.addAgent((px, py_))
-
-            rand_speed = random.uniform(0.8, 1.2)
-            vx = 0
-            vy = rand_speed * np.sign(gy[j] - py_)
-            speed.append((vx, vy))
-
-    trajectories = [[positions[i]] for i in range(num_ped)]
-    return trajectories, positions, goals, speed
-
-def overfit_initialize_circle(num_ped, sim=None, center=(0, 0), radius=10):
-    positions = []
-    goals = []
-    speed = []
-    step = (2 * np.pi) / num_ped
-    radius = radius + np.random.uniform(-3, 3)
-    for pos in range(num_ped):
-        angle = pos * step + np.random.uniform(-0.01, 0.01)
-        px = center[0] + radius * np.cos(angle)
-        py_ = center[1] + radius * np.sin(angle)
-        gx = center[0] + radius * np.cos(angle + np.pi)
-        gy_ = center[1] + radius * np.sin(angle + np.pi)
-        positions.append((px, py_))
-        goals.append((gx, gy_))
-
-        if sim is not None:
-            sim.addAgent((px, py_))
-
-        ## v1.0
-        # rand_speed = random.uniform(0.8, 1.2)
-        # vx = 0
-        # vy = 0
-        # speed.append((vx, vy))
-
-        ## v2.0
-        velocity = np.array([gx - px, gy_ - py_])
-        magnitude = np.linalg.norm(velocity)
-        init_vel = 1 * velocity / magnitude if magnitude > 1 else velocity
-        speed.append([init_vel[0], init_vel[1]])
-
-    trajectories = [[positions[i]] for i in range(num_ped)]
-    return trajectories, positions, goals, speed
-
-def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end_range=1.0):
+def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end_range=1.0, mode=None):
     """ Simulating Scenario using ORCA """
     ## Default: (1 / 60., 1.5, 5, 1.5, 2, 0.4, 2)
     sampling_rate = 1
 
-    ##Initiliaze simulators & scenes
-    if sim_scene == 'two_ped':
-        sim = rvo2.PyRVOSimulator(1 / 2.5, min_dist, 10, react_time, 2, 0.4, 2)
-        trajectories, _, goals, speed = overfit_initialize(num_ped, sim)
-
-    ## Circle Overfit
-    elif sim_scene == 'circle_overfit':
-        sim = rvo2.PyRVOSimulator(1 / 2.5, 2, 10, 2, 2, 0.4, 1.2)
-        trajectories, _, goals, speed = overfit_initialize_circle(num_ped, sim)
-
     ## Circle Crossing
-    elif sim_scene == 'circle_crossing':
-        fps = 20
+    if sim_scene == 'circle_crossing':
+        fps = 100
         sampling_rate = fps / 2.5
         sim = rvo2.PyRVOSimulator(1/fps, 10, 10, 5, 5, 0.3, 1)
-        # sim = rvo2.PyRVOSimulator(1/fps, 4, 10, 4, 5, 0.6, 1.5) ## (TrajNet++)
-        trajectories, _, goals, speed = generate_circle_crossing(num_ped, sim)
-
-    ## Square Crossing
-    elif sim_scene == 'square_crossing':
-        fps = 5
-        sampling_rate = fps / 2.5
-        sim = rvo2.PyRVOSimulator(1/fps, 10, 10, 5, 5, 0.3, 1)
-        trajectories, _, goals, speed = generate_square_crossing(num_ped, sim)
-
+        if mode == 'trajnet':
+            sim = rvo2.PyRVOSimulator(1/fps, 4, 10, 4, 5, 0.6, 1.5) ## (TrajNet++)
+        trajectories, _, goals, speed = generate_circle_crossing(num_ped, sim, mode=mode)
     else:
         raise NotImplementedError
 
@@ -196,13 +74,14 @@ def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end
     done = False
     reaching_goal_by_ped = [False] * num_ped
     count = 0
-
+    valid = True
     ##Simulate a scene
     while not done and count < 6000:
+        count += 1
         sim.doStep()
         reaching_goal = []
         for i in range(num_ped):
-            if count == 0:
+            if count == 1:
                 trajectories[i].pop(0)
             position = sim.getAgentPosition(i)
 
@@ -222,36 +101,23 @@ def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end
                 speed = np.linalg.norm(velocity)
                 pref_vel = 1 * velocity / speed if speed > 1 else velocity
                 sim.setAgentPrefVelocity(i, tuple(pref_vel.tolist()))
-        count += 1
         done = all(reaching_goal)
 
-    return trajectories, count
+    if not done or not are_smoothes(trajectories):
+        valid = False
+
+    return trajectories, valid, goals
 
 def generate_sf_trajectory(sim_scene, num_ped, sf_params=[0.5, 2.1, 0.3], end_range=0.2):
     """ Simulating Scenario using SF """
     ## Default: (0.5, 2.1, 0.3)
     sampling_rate = 1
 
-    ##Initiliaze simulators & scenes
-    if sim_scene == 'two_ped':
-        trajectories, positions, goals, speed = overfit_initialize(num_ped)
-
-    ## Circle Overfit
-    elif sim_scene == 'circle_overfit':
-        trajectories, positions, goals, speed = overfit_initialize_circle(num_ped)
-
     ## Circle Crossing
-    elif sim_scene == 'circle_crossing':
+    if sim_scene == 'circle_crossing':
         fps = 10
         sampling_rate = fps / 2.5
         trajectories, positions, goals, speed = generate_circle_crossing(num_ped)
-
-    ## Square Crossing
-    elif sim_scene == 'square_crossing':
-        fps = 10
-        sampling_rate = fps / 2.5
-        trajectories, positions, goals, speed = generate_square_crossing(num_ped)
-
     else:
         raise NotImplementedError
 
@@ -284,7 +150,56 @@ def generate_sf_trajectory(sim_scene, num_ped, sf_params=[0.5, 2.1, 0.3], end_ra
 
     return trajectories, count
 
-def write_to_txt(trajectories, path, count, frame):
+
+def getAngle(a, b, c):
+    """
+    Return angle formed by 3 points
+    """
+    ba = a - b
+    bc = c - b
+    cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+    angle = np.arccos(cosine_angle)
+    return angle
+
+def are_smoothes(trajectories):
+    """
+    Check if there is no sharp turns in the trajectories
+    """
+    is_smooth = True
+    for i, _ in enumerate(trajectories):
+        trajectory = np.array(trajectories[i])
+        for j in range(0, len(trajectory[:, 0]) - 3):
+            p1 = np.array([trajectory[j, 0], trajectory[j, 1]])
+            p2 = np.array([trajectory[j+1, 0], trajectory[j+1, 1]])
+            p3 = np.array([trajectory[j+2, 0], trajectory[j+2, 1]])
+
+            angle = getAngle(p1, p2, p3)
+            if angle <= np.pi / 2:
+                is_smooth = False
+                # plt.scatter(p1[0], p1[1], color='red', marker='X')
+    return is_smooth
+
+def find_collisions(trajectories, max_steps):
+    """
+    Look for collisions in the trajectories
+    """
+    for timestep in range(max_steps):
+        positions = []
+        for ped, _ in enumerate(trajectories):
+            traj = np.array(trajectories[ped])
+            if timestep < len(traj):
+                positions.append(traj[timestep])
+
+        # Check if distance between 2 points is smaller than 0.1m
+        # If yes -> collision detected
+        for combi in itertools.combinations(positions, 2):
+            distance = (np.linalg.norm(combi[0]-combi[1]))
+            if distance < 0.2:
+                return True
+
+    return False
+
+def write_to_txt(trajectories, path, count, frame, dict_dest=None, goals=None):
     """ Write Trajectories to the text file """
 
     last_frame = 0
@@ -296,8 +211,11 @@ def write_to_txt(trajectories, path, count, frame):
                 track_data.append('{}, {}, {}, {}'.format(t+frame, count+i,
                                                           trajectories[i][t][0],
                                                           trajectories[i][t][1]))
+
                 if t == len(trajectories[i])-1 and t+frame > last_frame:
                     last_frame = t+frame
+            if goals:
+                dict_dest[count+i] = goals[i]
 
         for track in track_data:
             fo.write(track)
@@ -305,7 +223,7 @@ def write_to_txt(trajectories, path, count, frame):
 
     return last_frame
 
-def viz(trajectories):
+def viz(trajectories, mode=None):
     """ Visualize Trajectories """
     for i, _ in enumerate(trajectories):
         trajectory = np.array(trajectories[i])
@@ -313,53 +231,152 @@ def viz(trajectories):
 
     plt.xlim(-5, 5)
     plt.ylim(-5, 5)
-    # plt.xlim(-15, 15) ## TrajNet++
-    # plt.ylim(-15, 15) ## TrajNet++
+    if mode == 'trajnet':
+        plt.xlim(-15, 15) ## TrajNet++
+        plt.ylim(-15, 15) ## TrajNet++
     plt.show()
     plt.close()
+
+def predict_all(input_paths, goals, n_predict=12):
+
+    pred_length = n_predict
+
+    fps = 100
+    sampling_rate = fps / 2.5
+
+    sim = rvo2.PyRVOSimulator(1/fps, 4, 10, 4, 5, 0.6, 1.5) ## (TrajNet++)
+    trajectories = [[input_paths[i][-1]] for i, _ in enumerate(input_paths)]
+    [sim.addAgent((p[-1][0],p[-1][1])) for p in input_paths]
+
+    num_ped = len(trajectories)
+    reaching_goal_by_ped = [False] * num_ped
+    count = 0
+    end_range = 1.0
+    done = False
+
+    for i in range(num_ped):
+        velocity = np.array((input_paths[i][-1][0] - input_paths[i][-3][0], input_paths[i][-1][1] - input_paths[i][-3][1]))
+        velocity = velocity/0.8
+        sim.setAgentVelocity(i, tuple(velocity.tolist()))
+
+        velocity = np.array((goals[i][0] - input_paths[i][-1][0], goals[i][1] - input_paths[i][-1][1]))
+        speed = np.linalg.norm(velocity)
+        pref_vel = 1 * velocity / speed if speed > 1 else velocity
+        sim.setAgentPrefVelocity(i, tuple(pref_vel.tolist()))
+
+    ##Simulate a scene
+    while (not done) and count < sampling_rate * pred_length + 1:
+        # print("Count: ", count)
+        count += 1
+        sim.doStep()
+        reaching_goal = []
+        for i in range(num_ped):
+            if count == 1:
+                trajectories[i].pop(0)
+            position = sim.getAgentPosition(i)
+
+            ## Append only if Goal not reached
+            if not reaching_goal_by_ped[i]:
+                if count % sampling_rate == 0:
+                    trajectories[i].append(position)
+
+            # check if this agent reaches the goal
+            if np.linalg.norm(np.array(position) - np.array(goals[i])) < end_range:
+                reaching_goal.append(True)
+                sim.setAgentPrefVelocity(i, (0, 0))
+                reaching_goal_by_ped[i] = True
+            else:
+                reaching_goal.append(False)
+                velocity = np.array((goals[i][0] - position[0], goals[i][1] - position[1]))
+                speed = np.linalg.norm(velocity)
+                pref_vel = 1 * velocity / speed if speed > 1 else velocity
+                sim.setAgentPrefVelocity(i, tuple(pref_vel.tolist()))
+
+        done = all(reaching_goal)
+
+    return trajectories
+
+def evaluate_sensitivity(trajectories, goals, mode=None, ade_thresh=0.11, fde_thresh=0.2, iters=20):
+    observation = np.array([trajectory[10:15] for trajectory in trajectories])
+    observation = np.round(observation, 2)
+    goals = np.array(goals)
+
+    trajectories_re_list = []
+    for k in range(iters):
+        observation_re = add_noise(observation.copy())
+        trajectories_re = predict_all(observation_re, goals)
+        for m, _ in enumerate(trajectories_re):
+            diff_ade =  np.mean(np.linalg.norm(np.array(trajectories[m][15:27]) - np.array(trajectories_re[m]), axis=1))
+            diff_fde =  np.linalg.norm(np.array(trajectories[m][26]) - np.array(trajectories_re[m][-1]))
+            if diff_ade > ade_thresh or diff_fde > fde_thresh:
+                print("INVALID", diff_ade, diff_fde)
+        trajectories_re_list.append(np.array(trajectories_re))
+
+    visualize_sensitivity(trajectories, trajectories_re_list, mode=mode)
+
+def visualize_sensitivity(trajectories, trajectories_pred_scenes, mode=None):
+    """ Visualize Trajectories """
+    plt.grid(linestyle='dotted')
+    for i, _ in enumerate(trajectories):
+        trajectory = np.array(trajectories[i])
+        if i == 0:
+            plt.plot(trajectory[:, 0], trajectory[:, 1], linestyle='solid',
+                     color='black', marker='o', markersize=1.0, zorder=1.9)
+        else:
+            plt.plot(trajectory[:, 0], trajectory[:, 1], linestyle='None',
+                     color='black', marker='o', markersize=1.0, zorder=0.9)
+
+    for i, _ in enumerate(trajectories_pred_scenes):
+        trajectory_set = np.array(trajectories_pred_scenes[i])
+        for j, _ in enumerate(trajectory_set):
+            trajectory = trajectory_set[j]
+            plt.plot(trajectory[:, 0], trajectory[:, 1], linestyle='solid',
+                     color='blue', alpha=0.4, linewidth=2)
+
+    plt.xlim(-5, 5)
+    plt.ylim(-5, 5)
+    if mode == 'trajnet':
+        plt.xlim(-7, 7) ## TrajNet++
+        plt.ylim(-7, 7) ## TrajNet++
+    plt.show()
+    plt.close()
+
+def add_noise(observation):
+    ## Last Position Noise
+    # observation[0][-1] += np.random.uniform(0, 0.04, (2,))
+
+    ## Last Position Noise
+    thresh = 0.005
+    observation += np.random.uniform(-thresh, thresh, observation.shape)
+    return observation
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--simulator', default='orca',
                         choices=('orca', 'social_force'))
     parser.add_argument('--simulation_scene', default='circle_crossing',
-                        choices=('circle_crossing', 'square_crossing',
-                                 'circle_overfit', 'two_ped'))
+                        choices=('circle_crossing'))
     parser.add_argument('--style', required=False, default=None)
     parser.add_argument('--num_ped', type=int, default=10,
                         help='Number of ped in scene')
     parser.add_argument('--num_scenes', type=int, default=100,
                         help='Number of scenes')
     parser.add_argument('--test', default=False)
+    parser.add_argument('--mode', default=None,
+                        help='Keep trajnet for trajnet dataset generation')
 
     args = parser.parse_args()
+
+    np.seterr('ignore')
 
     ##Decide the number of scenes & agents per scene
     num_scenes = args.num_scenes
     num_ped = args.num_ped
-
-    if args.simulation_scene == 'two_ped':
-        num_ped = 2
+    mode = args.mode
+    min_dist, react_time = 1.5, 1.5
 
     if not os.path.isdir('./data'):
         os.makedirs('./data')
-
-    if args.style is not None and args.simulator == 'orca':
-        ## ORCA Params: For Two Ped / Different Styles
-        # # train_params (min_dist, react_time) = [[2, 2.5], [3, 1], [3, 2], [4, 2]]
-        # ## [3, 1] is close
-        # ## [2, 2.5], [3, 2] is medium
-        # ## [4, 2] is far
-        dict_params = {}
-        dict_params['close'] = [3, 1]
-        dict_params['medium1'] = [2, 2.5]
-        dict_params['medium2'] = [3, 2]
-        dict_params['far'] = [4, 2]
-        [min_dist, react_time] = dict_params[args.proximity]
-        print("min_dist, time_react:", min_dist, react_time)
-    else:
-        min_dist, react_time = 1.5, 1.5
-        args.style = ''
 
     ## Text File To Write the Scene
     output_file = 'data/raw/controlled/'
@@ -369,40 +386,59 @@ def main():
                   + args.simulator + '_' \
                   + args.simulation_scene + '_' \
                   + str(num_ped) + 'ped_' \
-                  + args.style + '.txt'
+                  + str(num_scenes) + 'scenes_' \
+                  + '.txt'
     print(output_file)
-
 
     count = 0
     last_frame = -5
 
+    dict_dest = {}
+
     for i in range(num_scenes):
-        # num_ped = random.choice([5, 6, 7, 8]) ## TrajNet++
+        if mode == 'trajnet':
+            num_ped = random.choice([4, 5, 6]) ## TrajNet++
         ## Print every 10th scene
         if (i+1) % 10 == 0:
             print(i)
 
         ##Generate scenes
         if args.simulator == 'orca':
-            trajectories, _ = generate_orca_trajectory(sim_scene=args.simulation_scene,
-                                                       num_ped=num_ped,
-                                                       min_dist=min_dist,
-                                                       react_time=react_time)
+            trajectories, valid, goals = generate_orca_trajectory(sim_scene=args.simulation_scene,
+                                                                  num_ped=num_ped,
+                                                                  min_dist=min_dist,
+                                                                  react_time=react_time,
+                                                                  mode=mode)
+            ## To evaluate sensitivity of ORCA
+            # evaluate_sensitivity(trajectories, goals, mode)
+
         elif args.simulator == 'social_force':
-            trajectories, _ = generate_sf_trajectory(sim_scene=args.simulation_scene,
-                                                     num_ped=num_ped,
-                                                     sf_params=[0.5, 1.0, 0.1])
+            trajectories, valid = generate_sf_trajectory(sim_scene=args.simulation_scene,
+                                                         num_ped=num_ped,
+                                                         sf_params=[0.5, 1.0, 0.1])
         else:
             raise NotImplementedError
 
         ## Visualizing scenes
-        # viz(trajectories)
+        # viz(trajectories, mode=mode)
 
-        ## Write
-        last_frame = write_to_txt(trajectories, output_file,
-                                  count=count, frame=last_frame+5)
-
+        ## Write if the scene is valid
+        if valid:
+            last_frame = write_to_txt(trajectories, output_file,
+                                      count=count, frame=last_frame+5,
+                                      dict_dest=dict_dest,
+                                      goals=goals)
         count += num_ped
+
+    ## Write Goal Dict of ORCA
+    if not os.path.isdir('./dest_new'):
+        os.makedirs('./dest_new')
+    with open('dest_new/' + args.simulator + '_' \
+                  + args.simulation_scene + '_' \
+                  + str(num_ped) + 'ped_' \
+                  + str(num_scenes) + 'scenes_' \
+                  + '.pkl', 'wb') as f:
+        pickle.dump(dict_dest, f)
 
 if __name__ == '__main__':
     main()

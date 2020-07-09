@@ -2,7 +2,7 @@
 
 import pysparkling
 import trajnetdataset
-import trajnettools
+import trajnetplusplustools
 
 
 def main():
@@ -47,7 +47,7 @@ def main():
 
      # write output
      .sortBy(lambda r: (r.pedestrian, r.frame))
-     .map(trajnettools.writers.trajnet_tracks)
+     .map(trajnetplusplustools.writers.trajnet_tracks)
      .saveAsTextFile('data/train/biwi/biwi_hotel.ndjson'))
 
 
