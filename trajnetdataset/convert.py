@@ -189,7 +189,7 @@ def main():
     parser.add_argument('--min_length', default=0.0, type=float,
                         help='Min Length of Primary Trajectory')
     parser.add_argument('--goal_file', default=None,
-                        help='Pkl file for goals (REQUIRED for ORCA)')
+                        help='Pkl file for goals (REQUIRED for ORCA Filter Process)')
 
     ## For Trajectory categorizing and filtering
     categorizers = parser.add_argument_group('categorizers')
@@ -253,7 +253,7 @@ def main():
     # # Synthetic datasets
     # args.acceptance = [0, 0, 1.0, 0] ## Preferred acceptance: Type III Only
     # # Generate Trajectories First. 'python -m trajnetdataset.controlled_data'
-    # write(controlled(sc, 'data/raw/controlled/orca_circle_crossing_10ped_.txt'),
+    # write(controlled(sc, 'data/raw/controlled/orca_circle_crossing_10ped_100scenes_.txt'),
     #       'output_pre/{split}/orca_circle_crossing_10ped.ndjson', args)
     # categorize(sc, 'output_pre/{split}/orca_circle_crossing_10ped.ndjson', args)
 

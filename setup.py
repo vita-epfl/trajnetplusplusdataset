@@ -1,4 +1,4 @@
-"""setup trajnetdataset"""
+"""setup trajnetplusplusdataset"""
 
 from setuptools import setup
 
@@ -15,16 +15,16 @@ setup(
         'trajnetdataset',
     ],
     license='MIT',
-    description='Trajnet dataset.',
+    description='Trajnet++ dataset.',
     long_description=open('README.rst').read(),
     author='Sven Kreiss',
     author_email='me@svenkreiss.com',
-    url='https://github.com/vita-epfl/trajnetdataset',
+    url='https://github.com/vita-epfl/trajnetplusplusdataset',
 
     install_requires=[
         'pysparkling',
         'scipy',
-        'trajnettools',
+        'trajnetplusplustools',
     ],
     extras_require={
         'test': [
