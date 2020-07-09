@@ -1,4 +1,5 @@
 import rvo2
+import numpy as np
 
 def predict_all(input_paths, goals, n_predict=12):
     pred_length = n_predict

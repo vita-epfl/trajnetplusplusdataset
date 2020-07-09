@@ -367,10 +367,13 @@ def main():
 
     args = parser.parse_args()
 
+    np.seterr('ignore')
+
     ##Decide the number of scenes & agents per scene
     num_scenes = args.num_scenes
     num_ped = args.num_ped
     mode = args.mode
+    min_dist, react_time = 1.5, 1.5
 
     if not os.path.isdir('./data'):
         os.makedirs('./data')
@@ -384,7 +387,7 @@ def main():
                   + args.simulation_scene + '_' \
                   + str(num_ped) + 'ped_' \
                   + str(num_scenes) + 'scenes_' \
-                  + args.style + '.txt'
+                  + '.txt'
     print(output_file)
 
     count = 0
@@ -428,11 +431,13 @@ def main():
         count += num_ped
 
     ## Write Goal Dict of ORCA
+    if not os.path.isdir('./dest_new'):
+        os.makedirs('./dest_new')
     with open('dest_new/' + args.simulator + '_' \
                   + args.simulation_scene + '_' \
                   + str(num_ped) + 'ped_' \
                   + str(num_scenes) + 'scenes_' \
-                  + args.style + '.pkl', 'wb') as f:
+                  + '.pkl', 'wb') as f:
         pickle.dump(dict_dest, f)
 
 if __name__ == '__main__':

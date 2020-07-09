@@ -2,8 +2,8 @@
 
 from collections import defaultdict
 
-import trajnettools
-from trajnettools import SceneRow
+import trajnetplusplustools
+from trajnetplusplustools import SceneRow
 
 
 class Scenes(object):
@@ -111,6 +111,6 @@ class Scenes(object):
         scenes = self.from_rows(rows)
         tracks = rows.filter(lambda r: r.frame in self.frames)
         all_data = rows.context.union((scenes, tracks))
-        all_data.map(trajnettools.writers.trajnet).saveAsTextFile(output_file)
+        all_data.map(trajnetplusplustools.writers.trajnet).saveAsTextFile(output_file)
 
         return self

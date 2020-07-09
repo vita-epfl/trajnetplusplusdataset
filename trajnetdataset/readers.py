@@ -7,7 +7,7 @@ import xml.etree.ElementTree
 import numpy as np
 import scipy.interpolate
 
-from trajnettools import TrackRow
+from trajnetplusplustools import TrackRow
 
 
 def biwi(line):
