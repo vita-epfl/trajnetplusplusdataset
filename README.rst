@@ -81,6 +81,14 @@ Run
 
     python -m trajnetdataset.convert
 
+The above command performs the following operations:
+
+* Step 1. readers.py: reads the raw data files and converts them to trackrows in .ndjson format
+* Step 2. scene.py: prepares different scenes given the obtained trackrows
+* Step 3. get_type.py: categorizes each scene based on our defined trajectory categorization
+
+.. code-block:: sh
+
     # create plots to check new dataset
     python -m trajnetplusplustools.summarize output/train/*.ndjson
 
