@@ -390,6 +390,10 @@ def main():
                   + '.txt'
     print(output_file)
 
+    ## empties the file contents [Prevents overlap if command run again]
+    with open(output_file, 'w') as fo:
+        pass
+
     count = 0
     last_frame = -5
 
