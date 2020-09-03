@@ -114,6 +114,15 @@ def orca_validity(scene, goals, pred_len=12, obs_len=9, iters=15):
                 return True
     return False
 
+def all_ped_present(scene):
+    """ 
+    Consider only those scenes where all pedestrians are present
+    Note: Different from removing incomplete trajectories
+    Useful for generating dataset for fast_parallel code: https://github.com/vita-epfl/trajnetplusplusbaselines/tree/fast_parallel
+    """
+    scene_xy = trajnetplusplustools.Reader.paths_to_xy(scene)
+    return (not np.isnan(scene_xy).any())
+
 def write(rows, path, new_scenes, new_frames):
     """ Writing scenes with categories """
     output_path = path.replace('output_pre', 'output')
@@ -181,6 +190,11 @@ def trajectory_type(rows, path, fps, track_id=0, args=None):
         ## Used in CFF Datasets to account for imperfect tracking
         # if check_collision(scene, args.pred_len):
         #     col_count += 1
+        #     continue
+
+        # ## Consider only those scenes where all pedestrians are present
+        # # Note: Different from removing incomplete trajectories
+        # if not all_ped_present(scene):
         #     continue
 
         ## Get Tag

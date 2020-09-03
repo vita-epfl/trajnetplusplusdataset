@@ -350,6 +350,26 @@ def add_noise(observation):
     observation += np.random.uniform(-thresh, thresh, observation.shape)
     return observation
 
+def write_goals(filename, dict_dest):
+    # Make goal folders and write save goals (.pkl files)
+    if not os.path.isdir('./goal_files'):
+        os.makedirs('./goal_files')
+
+    if not os.path.isdir('./goal_files/train'):
+        os.makedirs('./goal_files/train')
+    with open('goal_files/train/' + filename + '.pkl', 'wb') as f:
+        pickle.dump(dict_dest, f)
+
+    if not os.path.isdir('./goal_files/val'):
+        os.makedirs('./goal_files/val')
+    with open('goal_files/val/' + filename + '.pkl', 'wb') as f:
+        pickle.dump(dict_dest, f)
+
+    if not os.path.isdir('./goal_files/test_private'):
+        os.makedirs('./goal_files/test_private')
+    with open('goal_files/test_private/' + filename + '.pkl', 'wb') as f:
+        pickle.dump(dict_dest, f)
+    
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--simulator', default='orca',
@@ -390,9 +410,9 @@ def main():
                   + '.txt'
     print(output_file)
 
-    ## empties the file contents [Prevents overlap if command run again]
-    with open(output_file, 'w') as fo:
-        pass
+    ## removes the file, if previously generated
+    if os.path.isfile(output_file):
+        os.remove(output_file)
 
     count = 0
     last_frame = -5
@@ -435,14 +455,12 @@ def main():
         count += num_ped
 
     ## Write Goal Dict of ORCA
-    if not os.path.isdir('./dest_new'):
-        os.makedirs('./dest_new')
-    with open('dest_new/' + args.simulator + '_' \
-                  + args.simulation_scene + '_' \
-                  + str(num_ped) + 'ped_' \
-                  + str(num_scenes) + 'scenes_' \
-                  + '.pkl', 'wb') as f:
-        pickle.dump(dict_dest, f)
+    goal_filename = args.simulator + '_' \
+                    + args.simulation_scene + '_' \
+                    + str(num_ped) + 'ped_' \
+                    + str(num_scenes) + 'scenes_'
+    write_goals(goal_filename, dict_dest)
+
 
 if __name__ == '__main__':
     main()

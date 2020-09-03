@@ -1,5 +1,5 @@
 """ Preparng Scenes for TrajNet """
-
+import os
 from collections import defaultdict
 
 import trajnetplusplustools
@@ -111,6 +111,12 @@ class Scenes(object):
         scenes = self.from_rows(rows)
         tracks = rows.filter(lambda r: r.frame in self.frames)
         all_data = rows.context.union((scenes, tracks))
+
+        ## removes the file, if previously generated
+        if os.path.isfile(output_file):
+            os.remove(output_file)
+
+        ## write scenes and tracks
         all_data.map(trajnetplusplustools.writers.trajnet).saveAsTextFile(output_file)
 
         return self
