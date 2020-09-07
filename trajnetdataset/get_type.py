@@ -93,14 +93,14 @@ def add_noise(observation):
     observation += np.random.uniform(-thresh, thresh, observation.shape)
     return observation
 
-def orca_validity(scene, goals, pred_len=12, obs_len=9, iters=15):
+def orca_validity(scene, goals, pred_len=12, obs_len=9, mode='trajnet', iters=15):
     '''
     Check ORCA can reconstruct scene on rounding (To clean in future)
     '''
     scene_xy = trajnetplusplustools.Reader.paths_to_xy(scene)
     for _ in range(iters):
         observation = add_noise(scene_xy[:obs_len].copy())
-        orca_pred = predict_all(observation, goals)
+        orca_pred = predict_all(observation, goals, mode, pred_len)
         if len(orca_pred[0]) != pred_len:
             # print("Length Invalid")
             return True
@@ -194,8 +194,8 @@ def trajectory_type(rows, path, fps, track_id=0, args=None):
 
         # ## Consider only those scenes where all pedestrians are present
         # # Note: Different from removing incomplete trajectories
-        # if not all_ped_present(scene):
-        #     continue
+        if args.all_present and (not all_ped_present(scene)):
+            continue
 
         ## Get Tag
         tag, mult_tag, sub_tag = get_type(scene, args)
@@ -206,7 +206,7 @@ def trajectory_type(rows, path, fps, track_id=0, args=None):
             if orca_sensitivity:
                 goals = [goal_dict[path[0].pedestrian] for path in scene]
                 # print('Type III')
-                if orca_validity(scene, goals, args.pred_len, args.obs_len):
+                if orca_validity(scene, goals, args.pred_len, args.obs_len, args.mode):
                     col_count += 1
                     continue
 

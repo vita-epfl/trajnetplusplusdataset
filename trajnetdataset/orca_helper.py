@@ -1,11 +1,13 @@
 import rvo2
 import numpy as np
 
-def predict_all(input_paths, goals, n_predict=12):
-    pred_length = n_predict
+def predict_all(input_paths, goals, mode, pred_length):
     fps = 100
     sampling_rate = fps / 2.5
-    sim = rvo2.PyRVOSimulator(1/fps, 4, 10, 4, 5, 0.6, 1.5) ## (TrajNet++)
+    if mode == 'trajnet':
+        sim = rvo2.PyRVOSimulator(1/fps, 4, 10, 4, 5, 0.6, 1.5) ## (TrajNet++)
+    else:
+        sim = rvo2.PyRVOSimulator(1/fps, 10, 10, 5, 5, 0.3, 1) ## Default
 
     # initialize
     trajectories = [[(p[0], p[1])] for p in input_paths[-1]]

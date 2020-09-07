@@ -201,10 +201,14 @@ def main():
                         help='Sampling Stride')
     parser.add_argument('--min_length', default=0.0, type=float,
                         help='Min Length of Primary Trajectory')
-    parser.add_argument('--goal_file', default=None,
-                        help='Pkl file for goals (required for ORCA sensitive scene filtering)')
     parser.add_argument('--synthetic', action='store_true',
                         help='convert synthetic datasets (if false, convert real)')
+    parser.add_argument('--all_present', action='store_true',
+                        help='filter scenes where all pedestrians present at all times')
+    parser.add_argument('--goal_file', default=None,
+                        help='Pkl file for goals (required for ORCA sensitive scene filtering)')
+    parser.add_argument('--mode', default='default', choices=('default', 'trajnet'),
+                        help='mode of ORCA scene generation (required for ORCA sensitive scene filtering)')
 
     ## For Trajectory categorizing and filtering
     categorizers = parser.add_argument_group('categorizers')
