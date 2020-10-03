@@ -310,6 +310,8 @@ def main():
     #########################
     args.train_fraction = 0.0
     args.val_fraction = 0.0
+    args.acceptance = [1.0, 1.0, 1.0, 1.0]
+    args.chunk_stride = 1
 
     ## ETH
     write(standard(sc, 'data/eth/test/biwi_eth.txt '),
