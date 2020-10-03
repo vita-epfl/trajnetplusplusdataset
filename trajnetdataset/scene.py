@@ -104,7 +104,6 @@ class Scenes(object):
 
     def rows_to_file(self, rows, output_file):
         if '/test/' in output_file:
-            print('Output File: ', output_file)
             self.visible_chunk = self.obs_len
         else:
             self.visible_chunk = None

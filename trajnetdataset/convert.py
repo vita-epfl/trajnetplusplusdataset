@@ -230,53 +230,92 @@ def main():
     args = parser.parse_args()
     sc = pysparkling.Context()
 
-    # Real datasets conversion
-    if not args.synthetic:
-        write(biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt'),
-              'output_pre/{split}/biwi_hotel.ndjson', args)
-        categorize(sc, 'output_pre/{split}/biwi_hotel.ndjson', args)
-        write(crowds(sc, 'data/raw/crowds/crowds_zara01.vsp'),
-              'output_pre/{split}/crowds_zara01.ndjson', args)
-        categorize(sc, 'output_pre/{split}/crowds_zara01.ndjson', args)
-        write(crowds(sc, 'data/raw/crowds/crowds_zara03.vsp'),
-              'output_pre/{split}/crowds_zara03.ndjson', args)
-        categorize(sc, 'output_pre/{split}/crowds_zara03.ndjson', args)
-        write(crowds(sc, 'data/raw/crowds/students001.vsp'),
-              'output_pre/{split}/crowds_students001.ndjson', args)
-        categorize(sc, 'output_pre/{split}/crowds_students001.ndjson', args)
-        write(crowds(sc, 'data/raw/crowds/students003.vsp'),
-              'output_pre/{split}/crowds_students003.ndjson', args)
-        categorize(sc, 'output_pre/{split}/crowds_students003.ndjson', args)
+    # Real datasets conversion (eg. ETH)
+    #########################
+    ## Training Set
+    #########################
+    args.train_fraction = 1.0
+    args.val_fraction = 0.0
 
-        # # # new datasets
-        # write(lcas(sc, 'data/raw/lcas/test/data.csv'),
-        #       'output_pre/{split}/lcas.ndjson', args)
-        # categorize(sc, 'output_pre/{split}/lcas.ndjson', args)
+    ## Biwi
+    write(standard(sc, 'data/eth/train/biwi_hotel_train.txt'),
+          'output_pre/{split}/biwi_hotel_train.ndjson', args)
+    categorize(sc, 'output_pre/{split}/biwi_hotel_train.ndjson', args)
 
-        # args.fps = 2
-        # write(wildtrack(sc, 'data/raw/wildtrack/Wildtrack_dataset/annotations_positions/*.json'),
-        #       'output_pre/{split}/wildtrack.ndjson', args)
-        # categorize(sc, 'output_pre/{split}/wildtrack.ndjson', args)
-        # args.fps = 2.5 # (Default)
+    ## Crowds Zara
+    write(standard(sc, 'data/eth/train/crowds_zara02_train.txt '),
+          'output_pre/{split}/crowds_zara02_train.ndjson', args)
+    categorize(sc, 'output_pre/{split}/crowds_zara02_train.ndjson', args)
 
-        # # CFF: More trajectories
-        # # Chunk_stride > 20 preferred & order_frames.
-        # args.chunk_stride = 20
-        # args.order_frames = True
-        # write(cff(sc, 'data/raw/cff_dataset/al_position2013-02-06.csv'),
-        #       'output_pre/{split}/cff_06.ndjson', args)
-        # categorize(sc, 'output_pre/{split}/cff_06.ndjson', args)
-        # args.chunk_stride = 2 # (Default)
-        # args.order_frames = False # (Default)
+    write(standard(sc, 'data/eth/train/crowds_zara01_train.txt '),
+          'output_pre/{split}/crowds_zara01_train.ndjson', args)
+    categorize(sc, 'output_pre/{split}/crowds_zara01_train.ndjson', args)
 
-    # Synthetic datasets conversion
-    else:
-        # Note: Generate Trajectories First! See command below
-        ## 'python -m trajnetdataset.controlled_data <args>'
-        write(controlled(sc, 'data/raw/controlled/orca_circle_crossing_5ped_1000scenes_.txt'),
-              'output_pre/{split}/orca_five_synth.ndjson', args)
-        categorize(sc, 'output_pre/{split}/orca_five_synth.ndjson', args)
-        edit_goal_file('orca_circle_crossing_5ped_1000scenes_.pkl', 'orca_five_synth.pkl')
+    write(standard(sc, 'data/eth/train/crowds_zara03_train.txt '),
+          'output_pre/{split}/crowds_zara03_train.ndjson', args)
+    categorize(sc, 'output_pre/{split}/crowds_zara03_train.ndjson', args)
+
+    ## Crowds Uni
+    write(standard(sc, 'data/eth/train/students001_train.txt '),
+          'output_pre/{split}/students001_train.ndjson', args)
+    categorize(sc, 'output_pre/{split}/students001_train.ndjson', args)
+
+    write(standard(sc, 'data/eth/train/uni_examples_train.txt '),
+          'output_pre/{split}/uni_examples_train.ndjson', args)
+    categorize(sc, 'output_pre/{split}/uni_examples_train.ndjson', args)
+
+    write(standard(sc, 'data/eth/train/students003_train.txt '),
+          'output_pre/{split}/students003_train.ndjson', args)
+    categorize(sc, 'output_pre/{split}/students003_train.ndjson', args)
+
+    #########################
+    ## Validation Set
+    #########################
+    args.train_fraction = 0.0
+    args.val_fraction = 1.0
+
+    ## Biwi
+    write(standard(sc, 'data/eth/val/biwi_hotel_val.txt'),
+          'output_pre/{split}/biwi_hotel_train.ndjson', args)
+    categorize(sc, 'output_pre/{split}/biwi_hotel_train.ndjson', args)
+
+    ## Crowds Zara
+    write(standard(sc, 'data/eth/val/crowds_zara02_val.txt '),
+          'output_pre/{split}/crowds_zara02_train.ndjson', args)
+    categorize(sc, 'output_pre/{split}/crowds_zara02_train.ndjson', args)
+
+    write(standard(sc, 'data/eth/val/crowds_zara01_val.txt '),
+          'output_pre/{split}/crowds_zara01_train.ndjson', args)
+    categorize(sc, 'output_pre/{split}/crowds_zara01_train.ndjson', args)
+
+    write(standard(sc, 'data/eth/val/crowds_zara03_val.txt '),
+          'output_pre/{split}/crowds_zara03_train.ndjson', args)
+    categorize(sc, 'output_pre/{split}/crowds_zara03_train.ndjson', args)
+
+    ## Crowds Uni
+    write(standard(sc, 'data/eth/val/students001_val.txt '),
+          'output_pre/{split}/students001_train.ndjson', args)
+    categorize(sc, 'output_pre/{split}/students001_train.ndjson', args)
+
+    write(standard(sc, 'data/eth/val/uni_examples_val.txt '),
+          'output_pre/{split}/uni_examples_train.ndjson', args)
+    categorize(sc, 'output_pre/{split}/uni_examples_train.ndjson', args)
+
+    write(standard(sc, 'data/eth/val/students003_val.txt '),
+          'output_pre/{split}/students003_train.ndjson', args)
+    categorize(sc, 'output_pre/{split}/students003_train.ndjson', args)
+
+    #########################
+    ## Testing Set
+    #########################
+    args.train_fraction = 0.0
+    args.val_fraction = 0.0
+
+    ## ETH
+    write(standard(sc, 'data/eth/test/biwi_eth.txt '),
+          'output_pre/{split}/biwi_eth.ndjson', args)
+    categorize(sc, 'output_pre/{split}/biwi_eth.ndjson', args)
+
 
 if __name__ == '__main__':
     main()
