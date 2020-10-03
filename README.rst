@@ -1,3 +1,5 @@
+NEW: Converting new external dataset into TrajNet++ format. `Tutorial <https://thedebugger811.github.io/posts/2020/10/data_conversion/>`_
+
 Install
 -------
 
