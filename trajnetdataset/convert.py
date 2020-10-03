@@ -276,34 +276,34 @@ def main():
 
     ## Biwi
     write(standard(sc, 'data/eth/val/biwi_hotel_val.txt'),
-          'output_pre/{split}/biwi_hotel_train.ndjson', args)
-    categorize(sc, 'output_pre/{split}/biwi_hotel_train.ndjson', args)
+          'output_pre/{split}/biwi_hotel_val.ndjson', args)
+    categorize(sc, 'output_pre/{split}/biwi_hotel_val.ndjson', args)
 
     ## Crowds Zara
     write(standard(sc, 'data/eth/val/crowds_zara02_val.txt '),
-          'output_pre/{split}/crowds_zara02_train.ndjson', args)
-    categorize(sc, 'output_pre/{split}/crowds_zara02_train.ndjson', args)
+          'output_pre/{split}/crowds_zara02_val.ndjson', args)
+    categorize(sc, 'output_pre/{split}/crowds_zara02_val.ndjson', args)
 
     write(standard(sc, 'data/eth/val/crowds_zara01_val.txt '),
-          'output_pre/{split}/crowds_zara01_train.ndjson', args)
-    categorize(sc, 'output_pre/{split}/crowds_zara01_train.ndjson', args)
+          'output_pre/{split}/crowds_zara01_val.ndjson', args)
+    categorize(sc, 'output_pre/{split}/crowds_zara01_val.ndjson', args)
 
     write(standard(sc, 'data/eth/val/crowds_zara03_val.txt '),
-          'output_pre/{split}/crowds_zara03_train.ndjson', args)
-    categorize(sc, 'output_pre/{split}/crowds_zara03_train.ndjson', args)
+          'output_pre/{split}/crowds_zara03_val.ndjson', args)
+    categorize(sc, 'output_pre/{split}/crowds_zara03_val.ndjson', args)
 
     ## Crowds Uni
     write(standard(sc, 'data/eth/val/students001_val.txt '),
-          'output_pre/{split}/students001_train.ndjson', args)
-    categorize(sc, 'output_pre/{split}/students001_train.ndjson', args)
+          'output_pre/{split}/students001_val.ndjson', args)
+    categorize(sc, 'output_pre/{split}/students001_val.ndjson', args)
 
     write(standard(sc, 'data/eth/val/uni_examples_val.txt '),
-          'output_pre/{split}/uni_examples_train.ndjson', args)
-    categorize(sc, 'output_pre/{split}/uni_examples_train.ndjson', args)
+          'output_pre/{split}/uni_examples_val.ndjson', args)
+    categorize(sc, 'output_pre/{split}/uni_examples_val.ndjson', args)
 
     write(standard(sc, 'data/eth/val/students003_val.txt '),
-          'output_pre/{split}/students003_train.ndjson', args)
-    categorize(sc, 'output_pre/{split}/students003_train.ndjson', args)
+          'output_pre/{split}/students003_val.ndjson', args)
+    categorize(sc, 'output_pre/{split}/students003_val.ndjson', args)
 
     #########################
     ## Testing Set
