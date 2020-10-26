@@ -304,11 +304,22 @@ def main():
     else:
         # Note: Generate Trajectories First! See command below
         ## 'python -m trajnetdataset.controlled_data <args>'
-        print("Manual Synthetic Data Converion")
-        write(controlled(sc, 'data/raw/controlled/orca_circle_crossing_5ped_1000scenes_.txt'),
-              'output_pre/{split}/orca_five_synth.ndjson', args)
-        categorize(sc, 'output_pre/{split}/orca_five_synth.ndjson', args)
-        edit_goal_file('orca_circle_crossing_5ped_1000scenes_.pkl', 'orca_five_synth.pkl')
+        # write(controlled(sc, 'data/raw/controlled/orca_circle_crossing_5ped_1000scenes_.txt'),
+        #       'output_pre/{split}/orca_five_synth.ndjson', args)
+        # categorize(sc, 'output_pre/{split}/orca_five_synth.ndjson', args)
+        # edit_goal_file('orca_circle_crossing_5ped_1000scenes_.pkl', 'orca_five_synth.pkl')
+
+        ## 2 Ped Time Variation
+        # write(controlled(sc, 'data/raw/controlled/orca_two_ped_2ped_2000scenes_.txt'),
+        #       'output_pre/{split}/orca_two_ped.ndjson', args)
+        # categorize(sc, 'output_pre/{split}/orca_two_ped.ndjson', args)
+        # edit_goal_file('orca_two_ped_2ped_2000scenes_.pkl', 'orca_two_ped.pkl')
+
+        ## 2 Ped Time+Angle Variation
+        write(controlled(sc, 'data/raw/controlled/orca_circle_crossing_2ped_2000scenes_.txt'),
+              'output_pre/{split}/orca_two_ped_angle.ndjson', args)
+        categorize(sc, 'output_pre/{split}/orca_two_ped_angle.ndjson', args)
+        edit_goal_file('orca_circle_crossing_2ped_2000scenes_.pkl', 'orca_two_ped_angle.pkl')
 
 if __name__ == '__main__':
     main()

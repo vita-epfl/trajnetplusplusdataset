@@ -54,6 +54,33 @@ def generate_circle_crossing(num_ped, sim=None, radius=4, mode=None):
     trajectories = [[positions[i]] for i in range(num_ped)]
     return trajectories, positions, goals, speed
 
+def generate_twoped_crossing(num_ped=2, sim=None, radius=4, mode=None): 
+    positions = []
+    goals = []
+    speed = []
+    agent_list = []
+    if mode == 'trajnet':
+        radius = 10 ## 10 (TrajNet++)
+    radius = 10
+    for n in range(num_ped):
+        angle = np.sign(n - 0.5) * (np.pi / 2)
+        # add some noise to simulate all the possible cases robot could meet with human
+        px_noise = 0  ## human.v_pref
+        py_noise = 0.3*(random.uniform(0, 1) - 0.5)  ## human.v_pref
+        px = radius * np.cos(angle) + px_noise
+        py = radius * np.sin(angle) + py_noise
+        positions.append((px, py))
+        goals.append((-px, -py))
+        if sim is not None:
+            sim.addAgent((px, py))
+        velocity = np.array([-2 * px, -2 * py])
+        magnitude = np.linalg.norm(velocity)
+        init_vel = 1 * velocity / magnitude if magnitude > 1 else velocity
+        speed.append([init_vel[0], init_vel[1]])
+        agent_list.append([px, py, -px, -py])
+    trajectories = [[positions[i]] for i in range(num_ped)]
+    return trajectories, positions, goals, speed
+
 def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end_range=1.0, mode=None):
     """ Simulating Scenario using ORCA """
     ## Default: (1 / 60., 1.5, 5, 1.5, 2, 0.4, 2)
@@ -67,6 +94,13 @@ def generate_orca_trajectory(sim_scene, num_ped, min_dist=3, react_time=1.5, end
         if mode == 'trajnet':
             sim = rvo2.PyRVOSimulator(1/fps, 4, 10, 4, 5, 0.6, 1.5) ## (TrajNet++)
         trajectories, _, goals, speed = generate_circle_crossing(num_ped, sim, mode=mode)
+    elif sim_scene == 'two_ped':
+        fps = 100
+        sampling_rate = fps / 2.5
+        sim = rvo2.PyRVOSimulator(1/fps, 1.5, 5, 1.5, 2, 0.4, 1)
+        if mode == 'trajnet':
+            sim = rvo2.PyRVOSimulator(1/fps, 4, 10, 4, 5, 0.6, 1.5) ## (TrajNet++)
+        trajectories, _, goals, speed = generate_twoped_crossing(2, sim, mode=mode)
     else:
         raise NotImplementedError
 
@@ -375,7 +409,7 @@ def main():
     parser.add_argument('--simulator', default='orca',
                         choices=('orca', 'social_force'))
     parser.add_argument('--simulation_scene', default='circle_crossing',
-                        choices=('circle_crossing'))
+                        choices=('circle_crossing', 'two_ped'))
     parser.add_argument('--mode', default=None,
                         help='Set to trajnet for trajnet-based dataset generation')
     parser.add_argument('--num_ped', type=int, default=6,
@@ -428,7 +462,9 @@ def main():
 
     for i in range(num_scenes):
         if mode == 'trajnet':
-            num_ped = random.choice([4, 5, 6]) ## TrajNet++
+            # num_ped = random.choice([4, 5, 6]) ## TrajNet++
+            pass
+
         ## Print every 10th scene
         if (i+1) % 10 == 0:
             print(i)
