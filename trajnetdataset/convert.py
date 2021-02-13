@@ -108,6 +108,13 @@ def standard(sc, input_file):
             .map(readers.standard)
             .cache())
 
+def car_data(sc, input_file):
+    print('processing ' + input_file)
+    return (sc
+            .wholeTextFiles(input_file)
+            .flatMap(readers.car_data)
+            .cache())
+
 def write(input_rows, output_file, args):
     """ Write Valid Scenes without categorization """
 

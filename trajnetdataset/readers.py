@@ -286,3 +286,23 @@ def standard(line):
                     int(float(line[1])),
                     float(line[2]),
                     float(line[3]))
+
+def car_data(filename_content):
+    frame_id = int(filename_content[0].split('.')[0].split('/')[-1])
+    ratio = 5.0 / 162 ## 162 pix = 5 m
+    lines = filename_content[1].split('\n')
+    ## First Line: ID, Front1x, Front1y, Front2x, Front2y, Back1x, Back1y, Back2x, Back2y, Type, Occlusion
+    assert lines[0] == 'ID,Front1x,Front1y,Front2x,Front2y,Back1x,Back1y,Back2x,Back2y,Type,Occlusion'
+    ## Last Line: ""
+    assert lines[-1] == ''
+
+    for line in lines[1:-1]:
+        id_, F1x, F1y, F2x, F2y, B1x, B1y, B2x, B2y, type_, occ = line.split(',')
+
+        if int(type_) != 2:
+            continue
+
+        if int(frame_id) % 12 != 0:
+            continue
+
+        yield TrackRow(frame_id, int(id_), ratio * float(F1x), ratio * float(F1y))
