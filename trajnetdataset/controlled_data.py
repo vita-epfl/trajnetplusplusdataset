@@ -13,7 +13,7 @@ import rvo2
 import pickle
 import socialforce
 from socialforce.potentials import PedPedPotential
-from socialforce.fieldofview import FieldOfView
+from socialforce.field_of_view import FieldOfView
 
 def generate_circle_crossing(num_ped, sim=None, radius=4, mode=None): 
     positions = []
