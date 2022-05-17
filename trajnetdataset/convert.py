@@ -1,6 +1,8 @@
 """Create Trajnet data from original datasets."""
 import argparse
 import shutil
+import numpy as np
+import random
 
 import pysparkling
 import scipy.io
@@ -235,6 +237,10 @@ def main():
                               help='acceptance ratio of different trajectory (I, II, III, IV) types')
 
     args = parser.parse_args()
+    # Set Seed
+    random.seed(42)
+    np.random.seed(42)
+
     sc = pysparkling.Context()
 
     # Real datasets conversion
