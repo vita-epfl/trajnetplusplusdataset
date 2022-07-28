@@ -376,18 +376,19 @@ def main():
                         choices=('orca', 'social_force'))
     parser.add_argument('--simulation_scene', default='circle_crossing',
                         choices=('circle_crossing'))
-    parser.add_argument('--style', required=False, default=None)
-    parser.add_argument('--num_ped', type=int, default=10,
-                        help='Number of ped in scene')
+    parser.add_argument('--mode', default=None,
+                        help='Set to trajnet for trajnet-based dataset generation')
+    parser.add_argument('--num_ped', type=int, default=6,
+                        help='Number of ped in scene, if mode=trajnet then num_ped is randomly chosen from (4, 5, 6)')
     parser.add_argument('--num_scenes', type=int, default=100,
                         help='Number of scenes')
-    parser.add_argument('--test', default=False)
-    parser.add_argument('--mode', default=None,
-                        help='Keep trajnet for trajnet dataset generation')
-
+    parser.add_argument('--seed', type=int, default=42)
     args = parser.parse_args()
 
     np.seterr('ignore')
+    # Set Seed
+    random.seed(args.seed)
+    np.random.seed(args.seed)
 
     ##Decide the number of scenes & agents per scene
     num_scenes = args.num_scenes
@@ -397,18 +398,24 @@ def main():
 
     if not os.path.isdir('./data'):
         os.makedirs('./data')
+    if not os.path.isdir('./data/raw'):
+        os.makedirs('./data/raw')
+    if not os.path.isdir('./data/raw/controlled'):
+        os.makedirs('./data/raw/controlled')
 
     ## Text File To Write the Scene
     output_file = 'data/raw/controlled/'
-    if args.test:
-        output_file = output_file + 'test_'
     output_file = output_file \
                   + args.simulator + '_' \
                   + args.simulation_scene + '_' \
                   + str(num_ped) + 'ped_' \
                   + str(num_scenes) + 'scenes_' \
                   + '.txt'
-    print(output_file)
+
+    goal_filename = args.simulator + '_' \
+                    + args.simulation_scene + '_' \
+                    + str(num_ped) + 'ped_' \
+                    + str(num_scenes) + 'scenes_'
 
     ## removes the file, if previously generated
     if os.path.isfile(output_file):
@@ -455,12 +462,14 @@ def main():
         count += num_ped
 
     ## Write Goal Dict of ORCA
-    goal_filename = args.simulator + '_' \
-                    + args.simulation_scene + '_' \
-                    + str(num_ped) + 'ped_' \
-                    + str(num_scenes) + 'scenes_'
     write_goals(goal_filename, dict_dest)
 
+    print(f'ORCA trajectories stored at: {output_file}')
+    print(f'Goal information stored at: goal_files/train/{goal_filename}.pkl \n \n')
+
+    print(f'You can convert this trajectories into TrajNet++ format using the following command \n')
+    print(f'python -m trajnetdataset.convert --direct --synthetic --linear_threshold 0.3 --acceptance 0.0 0.0 1.0 0.0 \
+            --orca_file {output_file} --goal_file goal_files/train/{goal_filename}.pkl --output_filename orca_synthetic')
 
 if __name__ == '__main__':
     main()

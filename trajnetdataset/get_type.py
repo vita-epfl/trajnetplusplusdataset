@@ -93,7 +93,7 @@ def add_noise(observation):
     observation += np.random.uniform(-thresh, thresh, observation.shape)
     return observation
 
-def orca_validity(scene, goals, pred_len=12, obs_len=9, mode='trajnet', iters=15):
+def orca_validity(scene, goals, pred_len=12, obs_len=9, mode='trajnet', iters=5): #iters 15 for original
     '''
     Check ORCA can reconstruct scene on rounding (To clean in future)
     '''

@@ -212,10 +212,16 @@ def main():
                         help='Min Length of Primary Trajectory')
     parser.add_argument('--synthetic', action='store_true',
                         help='convert synthetic datasets (if false, convert real)')
+    parser.add_argument('--direct', action='store_true',
+                        help='directy convert synthetic datasets using commandline')
     parser.add_argument('--all_present', action='store_true',
                         help='filter scenes where all pedestrians present at all times')
+    parser.add_argument('--orca_file', default=None,
+                        help='Txt file for ORCA trajectories, required in direct mode')
     parser.add_argument('--goal_file', default=None,
                         help='Pkl file for goals (required for ORCA sensitive scene filtering)')
+    parser.add_argument('--output_filename', default=None,
+                        help='name of the output dataset filename constructed in .ndjson format, required in direct mode')
     parser.add_argument('--mode', default='default', choices=('default', 'trajnet'),
                         help='mode of ORCA scene generation (required for ORCA sensitive scene filtering)')
 
@@ -282,10 +288,23 @@ def main():
         # args.chunk_stride = 2 # (Default)
         # args.order_frames = False # (Default)
 
-    # Synthetic datasets conversion
+    # Direct synthetic datasets conversion
+    elif args.direct:
+        # Note: Generate Trajectories First! See command below
+        ## 'python -m trajnetdataset.controlled_data <args>'
+        print("Direct Synthetic Data Converion")
+        assert args.orca_file is not None
+        assert args.goal_file is not None
+        assert args.output_filename is not None
+        write(controlled(sc, args.orca_file), 'output_pre/{split}/' + f'{args.output_filename}.ndjson', args)
+        categorize(sc, 'output_pre/{split}/' + f'{args.output_filename}.ndjson', args)
+        edit_goal_file(args.goal_file.split('/')[-1], '{output_filename}.pkl')
+
+    # Manual synthetic datasets conversion
     else:
         # Note: Generate Trajectories First! See command below
         ## 'python -m trajnetdataset.controlled_data <args>'
+        print("Manual Synthetic Data Converion")
         write(controlled(sc, 'data/raw/controlled/orca_circle_crossing_5ped_1000scenes_.txt'),
               'output_pre/{split}/orca_five_synth.ndjson', args)
         categorize(sc, 'output_pre/{split}/orca_five_synth.ndjson', args)

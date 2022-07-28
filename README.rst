@@ -6,12 +6,27 @@ Install
 .. code-block:: sh
 
     pip install -e '.[test,plot]'
-    pylint trajnetdataset
-    pytest
+    sh setup_orca.sh
+    sh setup_social_force.sh
 
 
-Prepare Data
-------------
+Prepare Synthetic Dataset
+-------------------------
+
+.. code-block:: sh
+
+    python -m trajnetdataset.controlled_data --mode 'trajnet' --num_scenes 1000
+
+
+Converting Synthetic Dataset to TrajNet++
+-----------------------------------------
+
+A command to categorize synthetic data into TrajNet++ format will be printed at the end of preparation command above. 
+
+
+
+Preparing Real World Data
+-------------------------
 
 Existing real world data:
 
@@ -67,17 +82,9 @@ Extract:
     mkdir -p data/raw/edinburgh
     wget -i edinburgh_informatics_forum_urls.txt -P data/raw/edinburgh/
 
-Prepare synthetic data:
 
-.. code-block:: sh
-
-    python -m trajnetdataset.controlled_data
-
-Help menu for generating diverse synthetic data:
-``python -m trajnetdataset.controlled_data --help``
-
-Run
----
+Converting Real World Dataset
+-----------------------------
 
 .. code-block:: sh
 
@@ -100,8 +107,15 @@ The above command performs the following operations:
     # visualize sample scenes
     python -m trajnetplusplustools.trajectories output/train/*.ndjson
 
-Difference in generated data
-----------------------------
+
+Converting Other Real World Datasets
+------------------------------------
+
+Refer to this example tutorial: `Tutorial <https://thedebugger811.github.io/posts/2020/10/data_conversion/>`_
+
+
+Difference in generated data in TrajNet++
+-----------------------------------------
 
 * partial tracks are now included (for correct occupancy maps)
 * pedestrians that appear in multiple chunks had the same id before (might be a problem for some input readers)
@@ -116,15 +130,22 @@ Citation
 If you find this code useful in your research then please cite
 
 .. code-block::
+    
+    @article{Kothari2020HumanTF,
+      author={Kothari, Parth and Kreiss, Sven and Alahi, Alexandre},
+      journal={IEEE Transactions on Intelligent Transportation Systems}, 
+      title={Human Trajectory Forecasting in Crowds: A Deep Learning Perspective}, 
+      year={2021},
+      volume={},
+      number={},
+      pages={1-15},
+      doi={10.1109/TITS.2021.3069362}
+     }
 
-    @inproceedings{Kothari2020HumanTF,
-      title={Human Trajectory Forecasting in Crowds: A Deep Learning Perspective},
-      author={Parth Kothari and Sven Kreiss and Alexandre Alahi},
-      year={2020}
-    }
 
 References
 ----------
+
 * ``eth``: 
 
 .. code-block::
