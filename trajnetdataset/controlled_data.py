@@ -468,7 +468,7 @@ def main():
     print(f'Goal information stored at: goal_files/train/{goal_filename}.pkl \n \n')
 
     print(f'You can convert this trajectories into TrajNet++ format using the following command \n')
-    print(f'python -m trajnetdataset.convert --direct --synthetic --linear_threshold 0.3 --acceptance 0.0 0.0 1.0 0.0 \
+    print(f'python -m trajnetdataset.convert --direct --synthetic --mode trajnet --linear_threshold 0.3 --acceptance 0.0 0.0 1.0 0.0 \
             --orca_file {output_file} --goal_file goal_files/train/{goal_filename}.pkl --output_filename orca_synthetic')
 
 if __name__ == '__main__':
