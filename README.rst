@@ -114,6 +114,12 @@ Converting Other Real World Datasets
 Refer to this example tutorial: `Tutorial <https://thedebugger811.github.io/posts/2020/10/data_conversion/>`_
 
 
+More Synthetic Toy Dataset Examples
+-----------------------------------
+
+Checkout the `toy <https://github.com/vita-epfl/trajnetplusplusdataset/tree/toy>`_ branch
+
+
 Difference in generated data in TrajNet++
 -----------------------------------------
 
