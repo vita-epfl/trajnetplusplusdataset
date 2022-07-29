@@ -298,7 +298,7 @@ def main():
         assert args.output_filename is not None
         write(controlled(sc, args.orca_file), 'output_pre/{split}/' + f'{args.output_filename}.ndjson', args)
         categorize(sc, 'output_pre/{split}/' + f'{args.output_filename}.ndjson', args)
-        edit_goal_file(args.goal_file.split('/')[-1], '{output_filename}.pkl')
+        edit_goal_file(args.goal_file.split('/')[-1], f'{args.output_filename}.pkl')
 
     # Manual synthetic datasets conversion
     else:
